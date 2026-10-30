@@ -66,7 +66,7 @@ python -m meet_master --help
 
 La résolution demandée dépend des modes pris en charge par la webcam et son pilote. En mode standard, l’aperçu ne sauvegarde pas les images et ne se connecte pas au réseau. Il ne fournit pas encore de caméra virtuelle aux logiciels de réunion.
 
-Avec `--gestures`, le programme reconnaît les gestes montrés devant la webcam et affiche le nom ainsi que le score de confiance. Le modèle officiel est téléchargé une seule fois dans le cache utilisateur au premier lancement. Cette étape nécessite une connexion Internet ; un modèle local peut être fourni avec `--model`. La reconnaissance n’active pas encore les transitions ni la vidéo de remplacement. Consultez la [fiche gestes](docs/features/gesture-detection.md) pour les détails et les limites de confidentialité de MediaPipe.
+Avec `--gestures`, le programme détecte jusqu’à deux mains et affiche séparément pour chacune son côté gauche/droit, son geste et son score de confiance. Le modèle officiel est téléchargé une seule fois dans le cache utilisateur au premier lancement. Cette étape nécessite une connexion Internet ; un modèle local peut être fourni avec `--model`. La reconnaissance n’active pas encore les transitions ni la vidéo de remplacement. Consultez la [fiche gestes](docs/features/gesture-detection.md) pour les détails et les limites de confidentialité de MediaPipe.
 
 ## Structure du code
 

@@ -18,13 +18,20 @@ MODEL_URL = (
 
 
 @dataclass(frozen=True)
-class GestureObservation:
-    """Result for one frame; gesture is set only above the confidence limit."""
+class HandGestureObservation:
+    """Recognized side and gesture for one hand in a frame."""
 
-    hand_detected: bool
+    handedness: str
     gesture: str | None
     confidence: float
     candidate: str | None = None
+
+
+@dataclass(frozen=True)
+class GestureObservation:
+    """All hands recognized in one frame, in MediaPipe's detection order."""
+
+    hands: tuple[HandGestureObservation, ...]
 
 
 def _default_model_path() -> Path:
@@ -94,7 +101,7 @@ class GestureRecognizer:
             options = vision.GestureRecognizerOptions(
                 base_options=mp_python.BaseOptions(model_asset_path=str(resolved_model)),
                 running_mode=vision.RunningMode.VIDEO,
-                num_hands=1,
+                num_hands=2,
                 min_hand_detection_confidence=0.5,
                 min_hand_presence_confidence=0.5,
                 min_tracking_confidence=0.5,
@@ -113,24 +120,41 @@ class GestureRecognizer:
             raise RuntimeError("OpenCV est nécessaire pour analyser les images de la webcam") from error
         return cv2
 
-    def recognize(self, frame_bgr) -> GestureObservation:
-        """Classify the most prominent hand gesture in a BGR image."""
+    def recognize(self, frame_bgr, mirrored_input: bool = False) -> GestureObservation:
+        """Classify up to two hands in a BGR image.
+
+        MediaPipe's handedness output flips when the input frame is mirrored.
+        Set ``mirrored_input`` when the preview has been horizontally flipped
+        so the returned side still refers to the user's actual left or right hand.
+        """
         rgb_frame = self._cv2.cvtColor(frame_bgr, self._cv2.COLOR_BGR2RGB)
         image = self._mp.Image(image_format=self._image_format, data=rgb_frame)
         timestamp_ms = max(time.monotonic_ns() // 1_000_000, self._last_timestamp_ms + 1)
         self._last_timestamp_ms = timestamp_ms
         result = self._recognizer.recognize_for_video(image, timestamp_ms)
 
-        hand_detected = bool(result.hand_landmarks)
-        if not result.gestures or not result.gestures[0]:
-            return GestureObservation(hand_detected, None, 0.0)
+        hands: list[HandGestureObservation] = []
+        for index, _landmarks in enumerate(result.hand_landmarks):
+            handedness = "Unknown"
+            if index < len(result.handedness) and result.handedness[index]:
+                handedness = result.handedness[index][0].category_name or "Unknown"
+            if mirrored_input:
+                handedness = {"Left": "Right", "Right": "Left"}.get(handedness, handedness)
 
-        category = result.gestures[0][0]
-        candidate = category.category_name
-        confidence = float(category.score or 0.0)
-        if candidate in (None, "None") or confidence < self._confidence_threshold:
-            return GestureObservation(hand_detected, None, confidence, candidate)
-        return GestureObservation(hand_detected, candidate, confidence, candidate)
+            candidate = None
+            confidence = 0.0
+            if index < len(result.gestures) and result.gestures[index]:
+                category = result.gestures[index][0]
+                candidate = category.category_name
+                confidence = float(category.score or 0.0)
+
+            gesture = candidate
+            if candidate in (None, "None") or confidence < self._confidence_threshold:
+                gesture = None
+
+            hands.append(HandGestureObservation(handedness, gesture, confidence, candidate))
+
+        return GestureObservation(tuple(hands))
 
     def close(self) -> None:
         """Release MediaPipe's native recognizer resources."""

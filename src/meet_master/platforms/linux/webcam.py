@@ -74,7 +74,11 @@ def preview(
             if mirror:
                 frame = cv2.flip(frame, 1)
 
-            observation = recognizer.recognize(frame) if recognizer is not None else None
+            observation = (
+                recognizer.recognize(frame, mirrored_input=mirror)
+                if recognizer is not None
+                else None
+            )
             cv2.putText(
                 frame,
                 "Meet Master | q ou Echap pour quitter",
@@ -117,23 +121,31 @@ def _draw_gesture_status(cv2, frame, observation: GestureObservation) -> None:
         "Victory": "V de victoire",
         "ILoveYou": "Signe I love you",
     }
-    if observation.gesture:
-        text = f"Geste : {labels.get(observation.gesture, observation.gesture)} ({observation.confidence:.0%})"
-        color = (40, 220, 100)
-    elif observation.hand_detected:
-        text = f"Main detectee - geste incertain ({observation.confidence:.0%})"
-        color = (40, 190, 240)
+    if not observation.hands:
+        lines = [("Aucune main detectee", (180, 180, 180))]
     else:
-        text = "Aucune main detectee"
-        color = (180, 180, 180)
+        side_labels = {"Left": "gauche", "Right": "droite", "Unknown": "inconnue"}
+        lines = []
+        for hand in observation.hands:
+            side = side_labels.get(hand.handedness, hand.handedness)
+            if hand.gesture:
+                label = labels.get(hand.gesture, hand.gesture)
+                text = f"Main {side} : {label} ({hand.confidence:.0%})"
+                color = (40, 220, 100)
+            else:
+                candidate = labels.get(hand.candidate, hand.candidate) if hand.candidate else "?"
+                text = f"Main {side} : incertain - {candidate} ({hand.confidence:.0%})"
+                color = (40, 190, 240)
+            lines.append((text, color))
 
-    cv2.putText(
-        frame,
-        text,
-        (16, 64),
-        cv2.FONT_HERSHEY_SIMPLEX,
-        0.65,
-        color,
-        2,
-        cv2.LINE_AA,
-    )
+    for line_index, (text, color) in enumerate(lines):
+        cv2.putText(
+            frame,
+            text,
+            (16, 64 + line_index * 30),
+            cv2.FONT_HERSHEY_SIMPLEX,
+            0.65,
+            color,
+            2,
+            cv2.LINE_AA,
+        )

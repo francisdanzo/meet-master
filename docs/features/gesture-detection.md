@@ -6,13 +6,15 @@
 
 Reconnaître en temps réel une main et un geste afin de vérifier le modèle, le cadrage et la fiabilité avant de relier les gestes aux états d’absence et de retour.
 
-## Comportement visé
+## Comportement actuel
 
-Lancer `meet-master preview --gestures` ouvre l’aperçu et affiche l’un de ces résultats : aucun geste/main détecté, ou un nom de geste accompagné de son score. Le code actuel traite un maximum d’une main et n’émet aucune commande de changement d’état. Le seuil d’affichage est de 0,65.
+Lancer `meet-master preview --gestures` ouvre l’aperçu et affiche séparément chaque main détectée : côté gauche/droit, geste reconnu et score. Jusqu’à deux mains sont traitées par image. Une main avec un score inférieur à 0,65 est indiquée comme incertaine. Le code n’émet aucune commande de changement d’état.
 
-## Fonctionnement envisagé
+## Fonctionnement
 
-Le cœur partagé convertit une trame BGR en RGB puis appelle MediaPipe Gesture Recognizer en mode vidéo. Les horodatages monotones croissants sont requis par cette API. Le résultat est ramené à une observation indépendante de l’interface : main détectée, geste retenu, score et candidat. L’adaptateur Linux ne fait qu’afficher cette observation.
+Le cœur partagé convertit une trame BGR en RGB puis appelle MediaPipe Gesture Recognizer en mode vidéo avec `num_hands=2`. Les horodatages monotones croissants sont requis par cette API. Les résultats d’identité de main et de geste sont associés par leur index de détection et renvoyés comme une liste d’observations indépendantes de l’interface : côté, geste retenu, score et candidat. L’adaptateur Linux ne fait qu’afficher ces observations sur des lignes distinctes.
+
+MediaPipe précise que les côtés gauche/droit sont ceux de la personne et qu’une image inversée horizontalement inverse aussi la classification des côtés. Comme l’aperçu est miroir par défaut, Meet Master corrige les étiquettes dans ce mode. Avec `--no-mirror`, les côtés du flux brut sont conservés. Cette convention est décrite dans le [guide officiel Hand Landmarker](https://developers.google.com/edge/mediapipe/solutions/vision/hand_landmarker).
 
 Le modèle préentraîné reconnaît les catégories fournies par MediaPipe : poing fermé, paume ouverte, index pointé vers le haut, pouce vers le bas, pouce vers le haut, signe V et « I Love You ». Les noms et seuils proviennent de [l’API GestureRecognizerOptions](https://ai.google.dev/edge/api/mediapipe/python/mp/tasks/vision/GestureRecognizerOptions).
 
