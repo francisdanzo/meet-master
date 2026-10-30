@@ -8,7 +8,7 @@ Reconnaître en temps réel une main et un geste afin de vérifier le modèle, l
 
 ## Comportement actuel
 
-Lancer `meet-master preview --gestures` ouvre l’aperçu et affiche séparément chaque main détectée : côté gauche/droit, geste reconnu et score. Jusqu’à deux mains sont traitées par image. Une main avec un score inférieur à 0,65 est indiquée comme incertaine. Le code n’émet aucune commande de changement d’état.
+Lancer `meet-master preview --gestures` ouvre l’aperçu et affiche séparément chaque main détectée : côté gauche/droit, geste reconnu et score. Jusqu’à deux mains sont traitées par image. Une prédiction sous le seuil est marquée « score faible » avec le candidat et son score. Si le modèle choisit la catégorie `None`, l’aperçu indique « geste hors modèle ». Le code n’émet aucune commande de changement d’état.
 
 ## Fonctionnement
 
@@ -25,9 +25,17 @@ python -m pip install -e '.[gestures]'
 meet-master preview --gestures
 ```
 
+Le seuil de reconnaissance vaut `0.50` par défaut et se règle entre `0` et `1` :
+
+```bash
+meet-master preview --gestures --gesture-threshold 0.35
+```
+
+Un seuil plus bas accepte davantage de candidats, mais augmente aussi les fausses reconnaissances. En mode aperçu, le réglage sert seulement à l’affichage. Il faudra choisir et valider un seuil plus strict avant de relier un geste à une action.
+
 Au premier lancement, Meet Master télécharge le fichier officiel du modèle depuis [Google AI Edge](https://storage.googleapis.com/mediapipe-models/gesture_recognizer/gesture_recognizer/float16/1/gesture_recognizer.task) et le conserve dans `~/.cache/meet-master/gesture_recognizer.task` (ou `$XDG_CACHE_HOME/meet-master/`). Pour utiliser un fichier déjà téléchargé, passez `--model /chemin/vers/gesture_recognizer.task`.
 
-Si le score est inférieur à `0.65`, le geste n’est pas affiché comme reconnu. Le seuil est actuellement fixé dans le cœur ; il sera exposé comme option quand nous aurons évalué son comportement sur plusieurs conditions de lumière et de cadrage.
+Le modèle fourni reconnaît sept catégories prédéfinies : poing fermé, paume ouverte, index levé, pouce vers le bas, pouce levé, signe V et signe « I Love You ». Il ne peut pas reconnaître toutes les formes de main possibles. Pour les gestes personnalisés ou les variantes qui apparaissent comme « geste hors modèle », il faudra fournir et évaluer un modèle personnalisé ; baisser le seuil ne peut pas ajouter de nouvelles catégories.
 
 ## Données et confidentialité
 
@@ -37,7 +45,7 @@ L’image webcam est analysée localement par le modèle ; Meet Master ne l’en
 
 - Sélection d’un geste de départ et d’un geste de retour qui ne se confondent pas dans l’usage quotidien.
 - Confirmation temporelle et anti-répétition avant toute action.
-- Seuil de confiance, durée de confirmation et anti-répétition.
+- Seuil de confiance pour les commandes, durée de confirmation et anti-répétition.
 - Comportement si la main est occultée, hors champ ou mal détectée.
 - Coût processeur sur des machines sans accélérateur dédié.
 - Vérification que l’analyse reste locale et n’enregistre pas les images.

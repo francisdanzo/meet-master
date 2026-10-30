@@ -60,6 +60,7 @@ meet-master preview --camera 1
 meet-master preview --width 640 --height 480
 meet-master preview --no-mirror
 meet-master preview --gestures
+meet-master preview --gestures --gesture-threshold 0.35
 meet-master preview --gestures --model /chemin/vers/gesture_recognizer.task
 python -m meet_master --help
 ```

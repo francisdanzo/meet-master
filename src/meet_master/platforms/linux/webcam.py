@@ -17,6 +17,7 @@ def preview(
     mirror: bool = True,
     recognize_gestures: bool = False,
     model_path: str | None = None,
+    gesture_threshold: float = 0.50,
 ) -> int:
     """Show a webcam preview until the user presses q or Escape.
 
@@ -27,6 +28,7 @@ def preview(
         mirror: Flip each displayed frame horizontally, like a mirror.
         recognize_gestures: Run the shared gesture model and show its result.
         model_path: Optional local MediaPipe model file; otherwise use the cache.
+        gesture_threshold: Minimum classifier score to mark a gesture as recognized.
 
     Returns:
         Zero after a normal user exit.
@@ -46,7 +48,11 @@ def preview(
     if width <= 0 or height <= 0:
         raise RuntimeError("la largeur et la hauteur doivent être supérieures à zéro")
 
-    recognizer = GestureRecognizer(model_path=model_path) if recognize_gestures else None
+    recognizer = (
+        GestureRecognizer(model_path=model_path, confidence_threshold=gesture_threshold)
+        if recognize_gestures
+        else None
+    )
 
     # CAP_V4L2 selects Linux's native webcam backend. The requested dimensions
     # are hints: hardware and driver support determine the actual frame size.
@@ -132,9 +138,12 @@ def _draw_gesture_status(cv2, frame, observation: GestureObservation) -> None:
                 label = labels.get(hand.gesture, hand.gesture)
                 text = f"Main {side} : {label} ({hand.confidence:.0%})"
                 color = (40, 220, 100)
+            elif hand.candidate in ("None", None):
+                text = f"Main {side} : geste hors model ({hand.confidence:.0%})"
+                color = (40, 190, 240)
             else:
                 candidate = labels.get(hand.candidate, hand.candidate) if hand.candidate else "?"
-                text = f"Main {side} : incertain - {candidate} ({hand.confidence:.0%})"
+                text = f"Main {side} : score faible - {candidate} ({hand.confidence:.0%})"
                 color = (40, 190, 240)
             lines.append((text, color))
 

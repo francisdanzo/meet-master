@@ -78,7 +78,7 @@ class GestureRecognizer:
     Camera acquisition and user-interface drawing remain outside this class.
     """
 
-    def __init__(self, model_path: str | Path | None = None, confidence_threshold: float = 0.65):
+    def __init__(self, model_path: str | Path | None = None, confidence_threshold: float = 0.50):
         if not 0.0 <= confidence_threshold <= 1.0:
             raise ValueError("le seuil de confiance doit être compris entre 0 et 1")
 

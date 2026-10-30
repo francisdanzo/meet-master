@@ -10,6 +10,17 @@ import argparse
 import sys
 
 
+def _confidence_score(value: str) -> float:
+    """Parse a confidence score in the closed interval [0, 1]."""
+    try:
+        score = float(value)
+    except ValueError as error:
+        raise argparse.ArgumentTypeError("le score doit être un nombre entre 0 et 1") from error
+    if not 0.0 <= score <= 1.0:
+        raise argparse.ArgumentTypeError("le score doit être compris entre 0 et 1")
+    return score
+
+
 def _build_parser() -> argparse.ArgumentParser:
     """Build the CLI parser so help text stays the single source of truth."""
     parser = argparse.ArgumentParser(
@@ -46,6 +57,10 @@ def _build_parser() -> argparse.ArgumentParser:
         "--model", metavar="FICHIER",
         help="utiliser un modèle MediaPipe local au lieu du téléchargement automatique",
     )
+    preview.add_argument(
+        "--gesture-threshold", type=_confidence_score, default=0.50, metavar="SCORE",
+        help="score minimal d’un geste reconnu, de 0 à 1 (défaut : 0.50)",
+    )
     return parser
 
 
@@ -70,6 +85,7 @@ def main() -> int:
                 mirror=not args.no_mirror,
                 recognize_gestures=args.gestures,
                 model_path=args.model,
+                gesture_threshold=args.gesture_threshold,
             )
         except RuntimeError as error:
             print(f"Erreur : {error}", file=sys.stderr)
