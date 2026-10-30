@@ -1,0 +1,1 @@
+"""Intégration caméra pour Windows."""
