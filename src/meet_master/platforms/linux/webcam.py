@@ -127,6 +127,16 @@ def _draw_gesture_status(cv2, frame, observation: GestureObservation) -> None:
         "Victory": "V de victoire",
         "ILoveYou": "Signe I love you",
         "Horns": "Cornes rock",
+        "CrossedFingers": "Doigts croises",
+        "MiddleFinger": "Majeur leve",
+        "OK": "Signe OK",
+        "PinchedFingers": "Doigts pinces",
+        "Pinch": "Pincement pouce-index",
+        "VulcanSalute": "Salut vulcain",
+        "PointingRight": "Index vers droite",
+        "PointingLeft": "Index vers gauche",
+        "PointingDown": "Index vers bas",
+        "PointingAtViewer": "Index vers camera",
     }
     if not observation.hands:
         lines = [("Aucune main detectee", (180, 180, 180))]
@@ -144,7 +154,12 @@ def _draw_gesture_status(cv2, frame, observation: GestureObservation) -> None:
 
             if hand.rule_based:
                 label = labels.get(hand.gesture, hand.gesture)
-                text = f"Main {side} : {label} (forme, rotation libre)"
+                rotation_note = (
+                    ", rotation libre"
+                    if hand.gesture in {"Victory", "ILoveYou", "Horns"}
+                    else ""
+                )
+                text = f"Main {side} : {label} (forme{rotation_note})"
                 color = (40, 220, 100)
             elif hand.gesture:
                 text = f"Main {side} : {candidate_text}"

@@ -37,28 +37,103 @@ def _joint_angle_degrees(points, first: int, joint: int, last: int) -> float:
     return math.degrees(math.acos(max(-1.0, min(1.0, cosine))))
 
 
-def _orientation_invariant_gesture(world_landmarks) -> str | None:
-    """Recognize the V, horns, and I-love-you poses regardless of rotation."""
+def _distance_3d(a, b) -> float:
+    return math.sqrt(sum((a[axis] - b[axis]) ** 2 for axis in range(3)))
+
+
+def _segments_cross(a1, a2, b1, b2) -> bool:
+    """Return whether two 2D finger segments cross in the camera view."""
+    def orientation(a, b, c):
+        return (b[0] - a[0]) * (c[1] - a[1]) - (b[1] - a[1]) * (c[0] - a[0])
+
+    return (
+        orientation(a1, a2, b1) * orientation(a1, a2, b2) < 0
+        and orientation(b1, b2, a1) * orientation(b1, b2, a2) < 0
+    )
+
+
+def _geometric_gesture(world_landmarks, image_landmarks, mirrored_input: bool = False) -> str | None:
+    """Recognize common static poses from hand geometry.
+
+    Joint angles identify rotation-independent finger patterns. A few signs
+    whose meaning depends on screen direction use normalized image landmarks.
+    """
     if len(world_landmarks) < 21:
         return None
     points = [(landmark.x, landmark.y, landmark.z) for landmark in world_landmarks]
-    extended = {
-        name: _joint_angle_degrees(points, mcp, pip, tip) >= 150.0
+    image_points = [(landmark.x, landmark.y) for landmark in image_landmarks]
+    finger_angles = {
+        name: _joint_angle_degrees(points, mcp, pip, tip)
         for name, (mcp, pip, tip) in _FINGER_JOINTS.items()
     }
+    extended = {name: angle >= 150.0 for name, angle in finger_angles.items()}
+    flexed = {name: angle <= 125.0 for name, angle in finger_angles.items()}
     thumb_extended = _joint_angle_degrees(points, 2, 3, 4) >= 145.0
+    thumb_flexed = _joint_angle_degrees(points, 2, 3, 4) <= 120.0
 
     index = extended["index"]
     middle = extended["middle"]
     ring = extended["ring"]
     pinky = extended["pinky"]
 
-    if index and pinky and thumb_extended and not middle and not ring:
+    if index and pinky and thumb_extended and flexed["middle"] and flexed["ring"]:
         return "ILoveYou"
-    if index and pinky and not middle and not ring and not thumb_extended:
+    if index and pinky and flexed["middle"] and flexed["ring"] and thumb_flexed:
         return "Horns"
-    if index and middle and not ring and not pinky:
+    if index and middle and flexed["ring"] and flexed["pinky"]:
+        if len(image_points) >= 21 and _segments_cross(
+            image_points[5], image_points[8], image_points[9], image_points[12]
+        ):
+            return "CrossedFingers"
         return "Victory"
+
+    if middle and flexed["index"] and flexed["ring"] and flexed["pinky"]:
+        return "MiddleFinger"
+
+    palm_width = _distance_3d(points[5], points[17])
+    if palm_width > 0.0:
+        thumb_index_gap = _distance_3d(points[4], points[8]) / palm_width
+        other_fingers_extended = middle and ring and pinky
+        if thumb_index_gap < 0.24 and other_fingers_extended:
+            return "OK"
+
+        fingertip_gaps = [_distance_3d(points[4], points[tip]) for tip in (8, 12, 16, 20)]
+        if sum(fingertip_gaps) / len(fingertip_gaps) / palm_width < 0.32:
+            return "PinchedFingers"
+        if thumb_index_gap < 0.22 and not other_fingers_extended:
+            return "Pinch"
+
+    if all(extended.values()):
+        gaps = [
+            _distance_3d(points[first], points[second]) / palm_width
+            for first, second in ((8, 12), (12, 16), (16, 20))
+        ] if palm_width > 0.0 else []
+        if len(gaps) == 3 and gaps[1] > 1.5 * max(gaps[0], gaps[2]) and gaps[1] > 0.18:
+            return "VulcanSalute"
+        return "Open_Palm"
+
+    if all(flexed.values()):
+        if thumb_extended and len(image_points) >= 21:
+            thumb_dx = image_points[4][0] - image_points[2][0]
+            thumb_dy = image_points[4][1] - image_points[2][1]
+            if abs(thumb_dy) > abs(thumb_dx) * 1.2:
+                return "Thumb_Up" if thumb_dy < 0 else "Thumb_Down"
+        return "Closed_Fist"
+
+    if index and flexed["middle"] and flexed["ring"] and flexed["pinky"]:
+        if len(image_points) >= 21:
+            dx = image_points[8][0] - image_points[5][0]
+            dy = image_points[8][1] - image_points[5][1]
+            dz = image_landmarks[8].z - image_landmarks[5].z
+            if mirrored_input:
+                dx = -dx
+            if dz < -max(abs(dx), abs(dy)):
+                return "PointingAtViewer"
+            if abs(dx) > abs(dy) * 1.2:
+                return "PointingRight" if dx > 0 else "PointingLeft"
+            if abs(dy) > abs(dx) * 1.2:
+                return "Pointing_Up" if dy < 0 else "PointingDown"
+
     return None
 
 
@@ -198,7 +273,12 @@ class GestureRecognizer:
                 if index < len(result.hand_world_landmarks)
                 else ()
             )
-            geometric_gesture = _orientation_invariant_gesture(world_landmarks)
+            image_landmarks = result.hand_landmarks[index]
+            geometric_gesture = _geometric_gesture(
+                world_landmarks,
+                image_landmarks,
+                mirrored_input=mirrored_input,
+            )
             if geometric_gesture is not None:
                 hands.append(
                     HandGestureObservation(
