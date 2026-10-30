@@ -25,6 +25,7 @@ class HandGestureObservation:
     gesture: str | None
     confidence: float
     candidate: str | None = None
+    ranked_candidates: tuple[tuple[str, float], ...] = ()
 
 
 @dataclass(frozen=True)
@@ -86,6 +87,7 @@ class GestureRecognizer:
             import mediapipe as mp
             from mediapipe.tasks import python as mp_python
             from mediapipe.tasks.python import vision
+            from mediapipe.tasks.python.components.processors import ClassifierOptions
         except ImportError as error:
             raise RuntimeError(
                 "MediaPipe est absent. Installez l’option gestes avec « python -m pip install -e '.[gestures]' »."
@@ -105,6 +107,10 @@ class GestureRecognizer:
                 min_hand_detection_confidence=0.5,
                 min_hand_presence_confidence=0.5,
                 min_tracking_confidence=0.5,
+                canned_gesture_classifier_options=ClassifierOptions(
+                    max_results=8,
+                    score_threshold=0.0,
+                ),
             )
             self._recognizer = vision.GestureRecognizer.create_from_options(options)
             self._image_format = mp.ImageFormat.SRGB
@@ -141,18 +147,27 @@ class GestureRecognizer:
             if mirrored_input:
                 handedness = {"Left": "Right", "Right": "Left"}.get(handedness, handedness)
 
-            candidate = None
-            confidence = 0.0
-            if index < len(result.gestures) and result.gestures[index]:
-                category = result.gestures[index][0]
-                candidate = category.category_name
-                confidence = float(category.score or 0.0)
+            categories = result.gestures[index] if index < len(result.gestures) else []
+            ranked_candidates = tuple(
+                (category.category_name or "Unknown", float(category.score or 0.0))
+                for category in categories
+            )
+            candidate = ranked_candidates[0][0] if ranked_candidates else None
+            confidence = ranked_candidates[0][1] if ranked_candidates else 0.0
 
             gesture = candidate
             if candidate in (None, "None") or confidence < self._confidence_threshold:
                 gesture = None
 
-            hands.append(HandGestureObservation(handedness, gesture, confidence, candidate))
+            hands.append(
+                HandGestureObservation(
+                    handedness,
+                    gesture,
+                    confidence,
+                    candidate,
+                    ranked_candidates,
+                )
+            )
 
         return GestureObservation(tuple(hands))
 

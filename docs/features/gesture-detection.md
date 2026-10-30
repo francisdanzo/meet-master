@@ -8,11 +8,11 @@ Reconnaître en temps réel une main et un geste afin de vérifier le modèle, l
 
 ## Comportement actuel
 
-Lancer `meet-master preview --gestures` ouvre l’aperçu et affiche séparément chaque main détectée : côté gauche/droit, geste reconnu et score. Jusqu’à deux mains sont traitées par image. Une prédiction sous le seuil est marquée « score faible » avec le candidat et son score. Si le modèle choisit la catégorie `None`, l’aperçu indique « geste hors modèle ». Le code n’émet aucune commande de changement d’état.
+Lancer `meet-master preview --gestures` ouvre l’aperçu et affiche séparément chaque main détectée : côté gauche/droit et les trois meilleurs candidats avec leurs scores. Jusqu’à deux mains sont traitées par image. Une prédiction au-dessus du seuil est affichée en vert ; une prédiction plus faible est signalée, sans masquer le classement. Si la catégorie `None` est la meilleure, l’aperçu indique que le geste sort des catégories apprises. Le code n’émet aucune commande de changement d’état.
 
 ## Fonctionnement
 
-Le cœur partagé convertit une trame BGR en RGB puis appelle MediaPipe Gesture Recognizer en mode vidéo avec `num_hands=2`. Les horodatages monotones croissants sont requis par cette API. Les résultats d’identité de main et de geste sont associés par leur index de détection et renvoyés comme une liste d’observations indépendantes de l’interface : côté, geste retenu, score et candidat. L’adaptateur Linux ne fait qu’afficher ces observations sur des lignes distinctes.
+Le cœur partagé convertit une trame BGR en RGB puis appelle MediaPipe Gesture Recognizer en mode vidéo avec `num_hands=2`. Les horodatages monotones croissants sont requis par cette API. Les résultats d’identité de main et de geste sont associés par leur index de détection et renvoyés comme une liste d’observations indépendantes de l’interface : côté, meilleur geste, score et classement. Le classificateur est configuré pour renvoyer toutes ses catégories et ne pas filtrer les scores en interne ; l’interface montre les trois premières. Cela rend les hésitations du modèle visibles. L’adaptateur Linux ne fait qu’afficher ces observations sur des lignes distinctes.
 
 MediaPipe précise que les côtés gauche/droit sont ceux de la personne et qu’une image inversée horizontalement inverse aussi la classification des côtés. Comme l’aperçu est miroir par défaut, Meet Master corrige les étiquettes dans ce mode. Avec `--no-mirror`, les côtés du flux brut sont conservés. Cette convention est décrite dans le [guide officiel Hand Landmarker](https://developers.google.com/edge/mediapipe/solutions/vision/hand_landmarker).
 
@@ -25,13 +25,13 @@ python -m pip install -e '.[gestures]'
 meet-master preview --gestures
 ```
 
-Le seuil de reconnaissance vaut `0.50` par défaut et se règle entre `0` et `1` :
+Le seuil d’acceptation visuelle vaut `0.50` par défaut et se règle entre `0` et `1` :
 
 ```bash
 meet-master preview --gestures --gesture-threshold 0.35
 ```
 
-Un seuil plus bas accepte davantage de candidats, mais augmente aussi les fausses reconnaissances. En mode aperçu, le réglage sert seulement à l’affichage. Il faudra choisir et valider un seuil plus strict avant de relier un geste à une action.
+Un seuil plus bas marque davantage de candidats comme reconnus, mais augmente aussi les fausses reconnaissances. Les scores des trois meilleurs candidats restent affichés, même sous le seuil. En mode aperçu, le réglage sert seulement à l’affichage. Il faudra choisir et valider un seuil plus strict avant de relier un geste à une action. Le filtrage des classes est configurable par les options du [classificateur MediaPipe](https://ai.google.dev/edge/api/mediapipe/python/mp/tasks/components/processors/ClassifierOptions).
 
 Au premier lancement, Meet Master télécharge le fichier officiel du modèle depuis [Google AI Edge](https://storage.googleapis.com/mediapipe-models/gesture_recognizer/gesture_recognizer/float16/1/gesture_recognizer.task) et le conserve dans `~/.cache/meet-master/gesture_recognizer.task` (ou `$XDG_CACHE_HOME/meet-master/`). Pour utiliser un fichier déjà téléchargé, passez `--model /chemin/vers/gesture_recognizer.task`.
 

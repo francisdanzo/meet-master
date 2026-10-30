@@ -134,16 +134,21 @@ def _draw_gesture_status(cv2, frame, observation: GestureObservation) -> None:
         lines = []
         for hand in observation.hands:
             side = side_labels.get(hand.handedness, hand.handedness)
+            candidate_text = " | ".join(
+                f"{labels.get(name, 'Autre' if name == 'None' else name)} {score:.0%}"
+                for name, score in hand.ranked_candidates[:3]
+            )
+            if not candidate_text:
+                candidate_text = "aucun candidat"
+
             if hand.gesture:
-                label = labels.get(hand.gesture, hand.gesture)
-                text = f"Main {side} : {label} ({hand.confidence:.0%})"
+                text = f"Main {side} : {candidate_text}"
                 color = (40, 220, 100)
             elif hand.candidate in ("None", None):
-                text = f"Main {side} : geste hors model ({hand.confidence:.0%})"
+                text = f"Main {side} : hors gestes appris | {candidate_text}"
                 color = (40, 190, 240)
             else:
-                candidate = labels.get(hand.candidate, hand.candidate) if hand.candidate else "?"
-                text = f"Main {side} : score faible - {candidate} ({hand.confidence:.0%})"
+                text = f"Main {side} : score faible | {candidate_text}"
                 color = (40, 190, 240)
             lines.append((text, color))
 
