@@ -41,7 +41,7 @@ Aujourd’hui, la capture webcam Linux et l’aperçu local sont codés. La reco
 4. Chaque image BGR est éventuellement inversée horizontalement, annotée, puis affichée dans une fenêtre locale.
 5. `q` ou `Échap` arrête la boucle. Le bloc `finally` libère la webcam et ferme les fenêtres OpenCV.
 
-Avec `--gestures`, chaque trame affichée est aussi envoyée au reconnaisseur partagé. Celui-ci convertit BGR en RGB, appelle MediaPipe en mode vidéo avec un horodatage monotone et renvoie une observation typée. L’adaptateur traduit le nom du geste en libellé d’aperçu ; aucune action de présence n’est déclenchée.
+Avec `--gestures`, chaque trame affichée est aussi envoyée au reconnaisseur partagé. Celui-ci convertit BGR en RGB, appelle MediaPipe en mode vidéo avec un horodatage monotone et renvoie une observation typée. Des règles sur les angles articulaires 3D peuvent remplacer le classement du modèle pour des signes choisis dont la forme des doigts suffit. L’adaptateur traduit les noms en libellés d’aperçu ; aucune action de présence n’est déclenchée.
 
 ## Prochaines frontières à stabiliser
 

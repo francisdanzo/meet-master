@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
+import math
 import os
 from pathlib import Path
 import shutil
@@ -16,6 +17,50 @@ MODEL_URL = (
     "gesture_recognizer/float16/1/gesture_recognizer.task"
 )
 
+_FINGER_JOINTS = {
+    "index": (5, 6, 8),
+    "middle": (9, 10, 12),
+    "ring": (13, 14, 16),
+    "pinky": (17, 18, 20),
+}
+
+
+def _joint_angle_degrees(points, first: int, joint: int, last: int) -> float:
+    """Return the 3D angle at a finger joint, independent of camera rotation."""
+    a = tuple(points[first][axis] - points[joint][axis] for axis in range(3))
+    b = tuple(points[last][axis] - points[joint][axis] for axis in range(3))
+    norm_a = math.sqrt(sum(value * value for value in a))
+    norm_b = math.sqrt(sum(value * value for value in b))
+    if norm_a == 0.0 or norm_b == 0.0:
+        return 0.0
+    cosine = sum(a[axis] * b[axis] for axis in range(3)) / (norm_a * norm_b)
+    return math.degrees(math.acos(max(-1.0, min(1.0, cosine))))
+
+
+def _orientation_invariant_gesture(world_landmarks) -> str | None:
+    """Recognize the V, horns, and I-love-you poses regardless of rotation."""
+    if len(world_landmarks) < 21:
+        return None
+    points = [(landmark.x, landmark.y, landmark.z) for landmark in world_landmarks]
+    extended = {
+        name: _joint_angle_degrees(points, mcp, pip, tip) >= 150.0
+        for name, (mcp, pip, tip) in _FINGER_JOINTS.items()
+    }
+    thumb_extended = _joint_angle_degrees(points, 2, 3, 4) >= 145.0
+
+    index = extended["index"]
+    middle = extended["middle"]
+    ring = extended["ring"]
+    pinky = extended["pinky"]
+
+    if index and pinky and thumb_extended and not middle and not ring:
+        return "ILoveYou"
+    if index and pinky and not middle and not ring and not thumb_extended:
+        return "Horns"
+    if index and middle and not ring and not pinky:
+        return "Victory"
+    return None
+
 
 @dataclass(frozen=True)
 class HandGestureObservation:
@@ -26,6 +71,7 @@ class HandGestureObservation:
     confidence: float
     candidate: str | None = None
     ranked_candidates: tuple[tuple[str, float], ...] = ()
+    rule_based: bool = False
 
 
 @dataclass(frozen=True)
@@ -146,6 +192,25 @@ class GestureRecognizer:
                 handedness = result.handedness[index][0].category_name or "Unknown"
             if mirrored_input:
                 handedness = {"Left": "Right", "Right": "Left"}.get(handedness, handedness)
+
+            world_landmarks = (
+                result.hand_world_landmarks[index]
+                if index < len(result.hand_world_landmarks)
+                else ()
+            )
+            geometric_gesture = _orientation_invariant_gesture(world_landmarks)
+            if geometric_gesture is not None:
+                hands.append(
+                    HandGestureObservation(
+                        handedness=handedness,
+                        gesture=geometric_gesture,
+                        confidence=1.0,
+                        candidate=geometric_gesture,
+                        ranked_candidates=((geometric_gesture, 1.0),),
+                        rule_based=True,
+                    )
+                )
+                continue
 
             categories = result.gestures[index] if index < len(result.gestures) else []
             ranked_candidates = tuple(
