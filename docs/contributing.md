@@ -14,6 +14,7 @@ Ce guide aide une personne qui découvre le dépôt à comprendre comment propos
 - Gardez les commandes et leur validation dans `cli.py`.
 - Gardez le code spécifique à Linux ou Windows dans `platforms/<système>/`.
 - Placez dans `core/` uniquement la logique qui ne doit pas connaître les périphériques ni le système.
+- Si un changement ajoute une dépendance, documentez le choix dans `docs/decisions/` quand il influence l’architecture, la confidentialité ou la compatibilité.
 - Une fonction partagée doit pouvoir recevoir des images ou des données en entrée sans ouvrir elle-même la webcam.
 - Libérez les périphériques et fenêtres même en cas d’erreur ou d’interruption.
 - Les messages destinés aux utilisateurs doivent expliquer quoi vérifier et, si possible, comment continuer.

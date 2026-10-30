@@ -5,7 +5,7 @@ Chaque fiche décrit une fonction selon le même modèle : **état**, **but**, *
 | Fonction | Fiche | État |
 |---|---|---|
 | Aperçu de la webcam | [webcam-preview.md](webcam-preview.md) | Disponible sous Linux |
-| Détection gestuelle | [gesture-detection.md](gesture-detection.md) | À concevoir |
+| Reconnaissance gestuelle dans l’aperçu | [gesture-detection.md](gesture-detection.md) | Prototype disponible |
 | Vidéo de remplacement | [replacement-video.md](replacement-video.md) | À concevoir |
 | Effets de transition | [transitions.md](transitions.md) | À concevoir |
 | Caméra virtuelle Linux | [virtual-camera-linux.md](virtual-camera-linux.md) | À concevoir |

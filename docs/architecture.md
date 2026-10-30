@@ -14,7 +14,7 @@ Ce document explique comment le dépôt est organisé et comment une image doit 
 ```text
 Webcam (adaptateur de plateforme)
         ↓ image brute
-Détection de main et interprétation du geste (cœur partagé)
+Reconnaissance de geste (cœur partagé, optionnelle dans l’aperçu)
         ↓ état : présent / départ / absent / retour
 Composition vidéo (cœur partagé)
         ↓ webcam, transition ou vidéo de remplacement
@@ -23,12 +23,12 @@ Caméra virtuelle (adaptateur de plateforme)
 Zoom / Meet / Teams ou autre application
 ```
 
-Aujourd’hui, seule la capture webcam Linux et l’aperçu local sont codés. Les autres blocs sont des étapes futures.
+Aujourd’hui, la capture webcam Linux et l’aperçu local sont codés. La reconnaissance gestuelle partagée est disponible en mode expérimental. Les états de présence, la composition vidéo et les sorties caméra virtuelle restent des étapes futures.
 
 ## Organisation
 
 - `src/meet_master/cli.py` : options de commande et sélection de l’adaptateur. Il ne doit pas contenir le traitement d’image.
-- `src/meet_master/core/` : types et logique qui doivent pouvoir être réutilisés par les deux plateformes.
+- `src/meet_master/core/` : types et logique qui doivent pouvoir être réutilisés par les deux plateformes, dont le client de reconnaissance gestuelle MediaPipe.
 - `src/meet_master/platforms/linux/` : accès Linux à la webcam, puis à la sortie caméra virtuelle.
 - `src/meet_master/platforms/windows/` : futur accès Windows. Garder les détails Windows hors du cœur.
 - `docs/features/` : fiche par fonctionnalité avec son état, son comportement, ses limites et les décisions encore ouvertes.
@@ -41,6 +41,8 @@ Aujourd’hui, seule la capture webcam Linux et l’aperçu local sont codés. L
 4. Chaque image BGR est éventuellement inversée horizontalement, annotée, puis affichée dans une fenêtre locale.
 5. `q` ou `Échap` arrête la boucle. Le bloc `finally` libère la webcam et ferme les fenêtres OpenCV.
 
+Avec `--gestures`, chaque trame affichée est aussi envoyée au reconnaisseur partagé. Celui-ci convertit BGR en RGB, appelle MediaPipe en mode vidéo avec un horodatage monotone et renvoie une observation typée. L’adaptateur traduit le nom du geste en libellé d’aperçu ; aucune action de présence n’est déclenchée.
+
 ## Prochaines frontières à stabiliser
 
 - Une interface commune de capture qui fournit les images et leur horodatage.
@@ -48,4 +50,4 @@ Aujourd’hui, seule la capture webcam Linux et l’aperçu local sont codés. L
 - Une sortie caméra avec démarrage, arrêt, gestion des erreurs et cadence définis.
 - Le comportement si la main ou le geste n’est pas reconnu, afin d’éviter une bascule accidentelle.
 
-Les choix de dépendances de reconnaissance gestuelle et de caméra virtuelle seront documentés dans des décisions d’architecture quand ils seront faits.
+Le choix MediaPipe pour la reconnaissance est consigné dans [la décision 0001](decisions/0001-mediapipe-gesture-recognizer.md). Le backend de caméra virtuelle reste à choisir.

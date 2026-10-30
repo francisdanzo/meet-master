@@ -38,6 +38,14 @@ def _build_parser() -> argparse.ArgumentParser:
         "--no-mirror", action="store_true",
         help="ne pas inverser l’image horizontalement",
     )
+    preview.add_argument(
+        "--gestures", action="store_true",
+        help="reconnaître et afficher les gestes (nécessite l’extra [gestures])",
+    )
+    preview.add_argument(
+        "--model", metavar="FICHIER",
+        help="utiliser un modèle MediaPipe local au lieu du téléchargement automatique",
+    )
     return parser
 
 
@@ -60,6 +68,8 @@ def main() -> int:
                 width=args.width,
                 height=args.height,
                 mirror=not args.no_mirror,
+                recognize_gestures=args.gestures,
+                model_path=args.model,
             )
         except RuntimeError as error:
             print(f"Erreur : {error}", file=sys.stderr)

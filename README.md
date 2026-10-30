@@ -9,7 +9,7 @@ La première fonction disponible est l’aperçu local de la webcam sous Linux. 
 | Fonctionnalité | État | Documentation |
 |---|---|---|
 | Aperçu webcam Linux | Disponible | [Guide de l’aperçu](docs/features/webcam-preview.md) |
-| Détection des gestes | À concevoir | [Spécification](docs/features/gesture-detection.md) |
+| Reconnaissance des gestes dans l’aperçu | Prototype disponible | [Fonctionnement et limites](docs/features/gesture-detection.md) |
 | Vidéo de remplacement en boucle | À concevoir | [Spécification](docs/features/replacement-video.md) |
 | Transitions de disparition et de retour | À concevoir | [Spécification](docs/features/transitions.md) |
 | Caméra virtuelle Linux | À concevoir | [Spécification](docs/features/virtual-camera-linux.md) |
@@ -30,6 +30,12 @@ python -m pip install --upgrade pip
 python -m pip install -e .
 ```
 
+Pour installer la reconnaissance gestuelle, ajoutez l’option correspondante :
+
+```bash
+python -m pip install -e '.[gestures]'
+```
+
 Sous Debian, si la création de l’environnement virtuel indique que `venv` manque, installez le paquet système correspondant à votre version de Python (`python3-venv`), puis recréez l’environnement.
 
 ## Lancer l’aperçu webcam
@@ -46,10 +52,14 @@ Options utiles :
 meet-master preview --camera 1
 meet-master preview --width 640 --height 480
 meet-master preview --no-mirror
+meet-master preview --gestures
+meet-master preview --gestures --model /chemin/vers/gesture_recognizer.task
 python -m meet_master --help
 ```
 
-La résolution demandée dépend des modes pris en charge par la webcam et son pilote. L’aperçu ne sauvegarde pas les images, n’envoie aucune donnée sur le réseau et ne fournit pas encore de caméra virtuelle aux logiciels de réunion.
+La résolution demandée dépend des modes pris en charge par la webcam et son pilote. En mode standard, l’aperçu ne sauvegarde pas les images et ne se connecte pas au réseau. Il ne fournit pas encore de caméra virtuelle aux logiciels de réunion.
+
+Avec `--gestures`, le programme reconnaît les gestes montrés devant la webcam et affiche le nom ainsi que le score de confiance. Le modèle officiel est téléchargé une seule fois dans le cache utilisateur au premier lancement. Cette étape nécessite une connexion Internet ; un modèle local peut être fourni avec `--model`. La reconnaissance n’active pas encore les transitions ni la vidéo de remplacement. Consultez la [fiche gestes](docs/features/gesture-detection.md) pour les détails et les limites de confidentialité de MediaPipe.
 
 ## Structure du code
 
@@ -62,6 +72,7 @@ src/meet_master/
 docs/
   architecture.md            flux de données et responsabilités
   features/                  fonctionnement et spécifications par fonction
+  decisions/                 raisons des choix d’architecture
   contributing.md            règles pour contribuer et maintenir la doc
 ```
 

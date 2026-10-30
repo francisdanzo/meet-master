@@ -7,8 +7,17 @@ virtual camera or save frames to disk.
 
 from __future__ import annotations
 
+from meet_master.core.gesture_recognizer import GestureObservation, GestureRecognizer
 
-def preview(camera_index: int = 0, width: int = 1280, height: int = 720, mirror: bool = True) -> int:
+
+def preview(
+    camera_index: int = 0,
+    width: int = 1280,
+    height: int = 720,
+    mirror: bool = True,
+    recognize_gestures: bool = False,
+    model_path: str | None = None,
+) -> int:
     """Show a webcam preview until the user presses q or Escape.
 
     Args:
@@ -16,6 +25,8 @@ def preview(camera_index: int = 0, width: int = 1280, height: int = 720, mirror:
         width: Requested capture width in pixels; the camera may choose another.
         height: Requested capture height in pixels; the camera may choose another.
         mirror: Flip each displayed frame horizontally, like a mirror.
+        recognize_gestures: Run the shared gesture model and show its result.
+        model_path: Optional local MediaPipe model file; otherwise use the cache.
 
     Returns:
         Zero after a normal user exit.
@@ -35,11 +46,15 @@ def preview(camera_index: int = 0, width: int = 1280, height: int = 720, mirror:
     if width <= 0 or height <= 0:
         raise RuntimeError("la largeur et la hauteur doivent être supérieures à zéro")
 
+    recognizer = GestureRecognizer(model_path=model_path) if recognize_gestures else None
+
     # CAP_V4L2 selects Linux's native webcam backend. The requested dimensions
     # are hints: hardware and driver support determine the actual frame size.
     capture = cv2.VideoCapture(camera_index, cv2.CAP_V4L2)
     if not capture.isOpened():
         capture.release()
+        if recognizer is not None:
+            recognizer.close()
         raise RuntimeError(
             f"impossible d’ouvrir la caméra {camera_index}. Vérifiez qu’elle existe, "
             "qu’aucune autre application ne l’utilise et que votre compte a accès à /dev/video*. "
@@ -59,9 +74,10 @@ def preview(camera_index: int = 0, width: int = 1280, height: int = 720, mirror:
             if mirror:
                 frame = cv2.flip(frame, 1)
 
+            observation = recognizer.recognize(frame) if recognizer is not None else None
             cv2.putText(
                 frame,
-                "Apercu Meet Master | q ou Echap pour quitter",
+                "Meet Master | q ou Echap pour quitter",
                 (16, 32),
                 cv2.FONT_HERSHEY_SIMPLEX,
                 0.65,
@@ -69,6 +85,8 @@ def preview(camera_index: int = 0, width: int = 1280, height: int = 720, mirror:
                 2,
                 cv2.LINE_AA,
             )
+            if observation is not None:
+                _draw_gesture_status(cv2, frame, observation)
             cv2.imshow(window_name, frame)
             key = cv2.waitKey(1) & 0xFF
             if key in (ord("q"), 27):
@@ -79,6 +97,43 @@ def preview(camera_index: int = 0, width: int = 1280, height: int = 720, mirror:
         ) from error
     finally:
         capture.release()
-        cv2.destroyAllWindows()
+        try:
+            cv2.destroyAllWindows()
+        finally:
+            if recognizer is not None:
+                recognizer.close()
 
     return 0
+
+
+def _draw_gesture_status(cv2, frame, observation: GestureObservation) -> None:
+    """Draw a short, ASCII-only status line using OpenCV's built-in font."""
+    labels = {
+        "Closed_Fist": "Poing ferme",
+        "Open_Palm": "Paume ouverte",
+        "Pointing_Up": "Index leve",
+        "Thumb_Down": "Pouce baisse",
+        "Thumb_Up": "Pouce leve",
+        "Victory": "V de victoire",
+        "ILoveYou": "Signe I love you",
+    }
+    if observation.gesture:
+        text = f"Geste : {labels.get(observation.gesture, observation.gesture)} ({observation.confidence:.0%})"
+        color = (40, 220, 100)
+    elif observation.hand_detected:
+        text = f"Main detectee - geste incertain ({observation.confidence:.0%})"
+        color = (40, 190, 240)
+    else:
+        text = "Aucune main detectee"
+        color = (180, 180, 180)
+
+    cv2.putText(
+        frame,
+        text,
+        (16, 64),
+        cv2.FONT_HERSHEY_SIMPLEX,
+        0.65,
+        color,
+        2,
+        cv2.LINE_AA,
+    )
