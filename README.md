@@ -10,6 +10,7 @@ La première fonction disponible est l’aperçu local de la webcam sous Linux. 
 |---|---|---|
 | Aperçu webcam Linux | Disponible | [Guide de l’aperçu](docs/features/webcam-preview.md) |
 | Reconnaissance des gestes dans l’aperçu | Prototype disponible | [Fonctionnement et limites](docs/features/gesture-detection.md) |
+| Basculer présent/absent avec ✌️ | Prototype Linux | [Fiche de la bascule](docs/features/presence-toggle.md) |
 | Vidéo de remplacement en boucle | À concevoir | [Spécification](docs/features/replacement-video.md) |
 | Transitions de disparition et de retour | À concevoir | [Spécification](docs/features/transitions.md) |
 | Caméra virtuelle Linux | À concevoir | [Spécification](docs/features/virtual-camera-linux.md) |

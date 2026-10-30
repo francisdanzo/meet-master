@@ -8,6 +8,7 @@ virtual camera or save frames to disk.
 from __future__ import annotations
 
 from meet_master.core.gesture_recognizer import GestureObservation, GestureRecognizer
+from meet_master.core.presence import PresenceController, PresenceState
 
 
 def preview(
@@ -53,6 +54,7 @@ def preview(
         if recognize_gestures
         else None
     )
+    presence = PresenceController() if recognize_gestures else None
 
     # CAP_V4L2 selects Linux's native webcam backend. The requested dimensions
     # are hints: hardware and driver support determine the actual frame size.
@@ -85,18 +87,67 @@ def preview(
                 if recognizer is not None
                 else None
             )
-            cv2.putText(
-                frame,
-                "Meet Master | q ou Echap pour quitter",
-                (16, 32),
-                cv2.FONT_HERSHEY_SIMPLEX,
-                0.65,
-                (40, 220, 100),
-                2,
-                cv2.LINE_AA,
-            )
+            if presence is not None and observation is not None:
+                presence.update(observation)
+
+            if presence is not None and presence.state is PresenceState.AWAY:
+                frame = frame.copy()
+                frame[:] = (20, 16, 32)
+                cv2.putText(
+                    frame,
+                    "ABSENCE ACTIVE",
+                    (24, 64),
+                    cv2.FONT_HERSHEY_SIMPLEX,
+                    1.0,
+                    (255, 255, 255),
+                    2,
+                    cv2.LINE_AA,
+                )
+                cv2.putText(
+                    frame,
+                    "Montre le signe V pour revenir",
+                    (24, 104),
+                    cv2.FONT_HERSHEY_SIMPLEX,
+                    0.7,
+                    (190, 200, 230),
+                    2,
+                    cv2.LINE_AA,
+                )
+                cv2.putText(
+                    frame,
+                    "Ecran provisoire - video de remplacement a venir",
+                    (24, 140),
+                    cv2.FONT_HERSHEY_SIMPLEX,
+                    0.55,
+                    (150, 160, 190),
+                    1,
+                    cv2.LINE_AA,
+                )
+            elif presence is not None:
+                cv2.putText(
+                    frame,
+                    "PRESENT | Montre le signe V pour partir",
+                    (16, 32),
+                    cv2.FONT_HERSHEY_SIMPLEX,
+                    0.65,
+                    (40, 220, 100),
+                    2,
+                    cv2.LINE_AA,
+                )
+            else:
+                cv2.putText(
+                    frame,
+                    "Meet Master | q ou Echap pour quitter",
+                    (16, 32),
+                    cv2.FONT_HERSHEY_SIMPLEX,
+                    0.65,
+                    (40, 220, 100),
+                    2,
+                    cv2.LINE_AA,
+                )
             if observation is not None:
-                _draw_gesture_status(cv2, frame, observation)
+                status_y = 184 if presence is not None and presence.state is PresenceState.AWAY else 64
+                _draw_gesture_status(cv2, frame, observation, status_y)
             cv2.imshow(window_name, frame)
             key = cv2.waitKey(1) & 0xFF
             if key in (ord("q"), 27):
@@ -116,7 +167,7 @@ def preview(
     return 0
 
 
-def _draw_gesture_status(cv2, frame, observation: GestureObservation) -> None:
+def _draw_gesture_status(cv2, frame, observation: GestureObservation, top: int = 64) -> None:
     """Draw a short, ASCII-only status line using OpenCV's built-in font."""
     labels = {
         "Closed_Fist": "Poing ferme",
@@ -176,7 +227,7 @@ def _draw_gesture_status(cv2, frame, observation: GestureObservation) -> None:
         cv2.putText(
             frame,
             text,
-            (16, 64 + line_index * 30),
+            (16, top + line_index * 30),
             cv2.FONT_HERSHEY_SIMPLEX,
             0.65,
             color,

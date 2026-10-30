@@ -1,6 +1,6 @@
 # Transitions de disparition et de retour
 
-**État : à concevoir.** Aucun effet n’est encore implémenté.
+**État : bascule présent/absent disponible dans l’aperçu Linux ; effets visuels à concevoir.**
 
 ## But
 
@@ -12,10 +12,11 @@ L’utilisateur souhaite un effet cinématographique inspiré de la disparition 
 
 ## Séquence visée
 
-1. Le geste confirmé déclenche une transition depuis l’image webcam.
-2. La transition se termine sur la vidéo de remplacement.
-3. La boucle continue jusqu’au geste de retour.
-4. Une transition de retour révèle la webcam.
+1. Le signe ✌️ confirmé bascule l’aperçu de présent à absent.
+2. Une carte sombre remplace l’image de la webcam dans l’aperçu local.
+3. Le signe ✌️ suivant revient à l’image webcam.
+
+La vidéo en boucle, la caméra virtuelle et les effets de disparition/apparition ne sont pas encore implémentés. Voir la [fiche de bascule présent/absent](presence-toggle.md).
 
 ## Choix à documenter avant implémentation
 

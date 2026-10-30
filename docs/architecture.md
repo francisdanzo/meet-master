@@ -23,7 +23,7 @@ Caméra virtuelle (adaptateur de plateforme)
 Zoom / Meet / Teams ou autre application
 ```
 
-Aujourd’hui, la capture webcam Linux et l’aperçu local sont codés. La reconnaissance gestuelle partagée est disponible en mode expérimental. Les états de présence, la composition vidéo et les sorties caméra virtuelle restent des étapes futures.
+Aujourd’hui, la capture webcam Linux, la reconnaissance gestuelle partagée et la bascule présent/absent dans l’aperçu sont codées. La composition avec vidéo de remplacement, les effets et les sorties caméra virtuelle restent des étapes futures.
 
 ## Organisation
 
@@ -41,7 +41,7 @@ Aujourd’hui, la capture webcam Linux et l’aperçu local sont codés. La reco
 4. Chaque image BGR est éventuellement inversée horizontalement, annotée, puis affichée dans une fenêtre locale.
 5. `q` ou `Échap` arrête la boucle. Le bloc `finally` libère la webcam et ferme les fenêtres OpenCV.
 
-Avec `--gestures`, chaque trame affichée est aussi envoyée au reconnaisseur partagé. Celui-ci convertit BGR en RGB, appelle MediaPipe en mode vidéo avec un horodatage monotone et renvoie une observation typée. Des règles sur les angles articulaires 3D peuvent remplacer le classement du modèle pour des signes choisis dont la forme des doigts suffit. L’adaptateur traduit les noms en libellés d’aperçu ; aucune action de présence n’est déclenchée.
+Avec `--gestures`, chaque trame affichée est aussi envoyée au reconnaisseur partagé. Celui-ci convertit BGR en RGB, appelle MediaPipe en mode vidéo avec un horodatage monotone et renvoie une observation typée. Des règles sur les angles articulaires 3D peuvent remplacer le classement du modèle pour des signes choisis dont la forme des doigts suffit. `core/presence.py` confirme ensuite le signe V, bascule l’état présent/absent et impose un relâchement avant une nouvelle bascule. L’adaptateur Linux affiche l’image webcam ou la carte d’absence selon cet état.
 
 ## Prochaines frontières à stabiliser
 
