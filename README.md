@@ -36,6 +36,13 @@ Pour installer la reconnaissance gestuelle, ajoutez l’option correspondante :
 python -m pip install -e '.[gestures]'
 ```
 
+Si vous aviez installé la première version du projet, elle utilisait `opencv-python`. MediaPipe utilise `opencv-contrib-python`, et les deux distributions fournissent le même module `cv2`. Avant de mettre à jour cet ancien environnement, retirez l’ancienne distribution pour éviter les fichiers partagés en double :
+
+```bash
+python -m pip uninstall opencv-python
+python -m pip install -e '.[gestures]'
+```
+
 Sous Debian, si la création de l’environnement virtuel indique que `venv` manque, installez le paquet système correspondant à votre version de Python (`python3-venv`), puis recréez l’environnement.
 
 ## Lancer l’aperçu webcam
