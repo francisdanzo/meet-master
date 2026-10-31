@@ -8,9 +8,9 @@
 meet-master preview --gestures --away-video /chemin/vers/ma-video.mp4
 ```
 
-Au lancement de `preview --gestures`, Meet Master demande de sortir du champ. Après cinq secondes de compte à rebours, il enregistre trois secondes d’arrière-plan depuis la webcam et crée un clip silencieux MJPEG dans un sous-dossier de session de son cache : `~/.cache/meet-master` sous Linux (ou `$XDG_CACHE_HOME/meet-master` si cette variable est définie), `%LOCALAPPDATA%\MeetMaster\Cache` sous Windows, et `~/Library/Caches/MeetMaster` sous macOS. Ce clip est lu en boucle pendant l’absence et le sous-dossier de session est supprimé quand l’application se ferme. L’enregistrement peut être annulé avec Échap.
+Au lancement de `preview --gestures`, Meet Master demande de sortir du champ. Après cinq secondes de compte à rebours, il enregistre trois secondes d’arrière-plan depuis la webcam et crée un clip silencieux MJPEG dans un sous-dossier de session de son cache : `~/.cache/meet-master` sous Linux (ou `$XDG_CACHE_HOME/meet-master` si cette variable est définie), `%LOCALAPPDATA%\MeetMaster\Cache` sous Windows, et `~/Library/Caches/MeetMaster` sous macOS. Il calcule aussi une image de référence pour estimer la silhouette. Le clip enregistré est lu en boucle en l’absence sauf si `--away-video` fournit un autre clip. Le sous-dossier de session est supprimé quand l’application se ferme. L’enregistrement peut être annulé avec Échap.
 
-`--away-video` nécessite `--gestures`, car le signe V commande le départ et le retour. Le chemin peut être relatif ou absolu. Cette option remplace la capture automatique et laisse le fichier fourni intact.
+`--away-video` nécessite `--gestures`, car le signe V commande le départ et le retour. Le chemin peut être relatif ou absolu. Cette option remplace seulement le clip joué pendant l’absence ; la capture de trois secondes reste nécessaire pour estimer la silhouette. Le fichier fourni est laissé intact.
 
 ## Comportement
 
@@ -18,6 +18,7 @@ Au lancement de `preview --gestures`, Meet Master demande de sortir du champ. Ap
 - À la fin du fichier, le lecteur revient au début et continue en boucle.
 - La vidéo est mise à l’échelle pour tenir dans la résolution de la webcam, sans recadrage ; les bandes latérales ou supérieure/inférieure sont sombres.
 - La capture automatique est réduite à 640×360 au maximum et enregistrée à 15 images par seconde pour limiter l’espace temporaire.
+- La silhouette est estimée en comparant l’image à la référence du fond ; les changements d’éclairage, les ombres et les vêtements proches du décor affectent le masque.
 - La vidéo capturée reste locale et son sous-dossier de session est supprimé à la fermeture normale ou après une erreur de capture.
 - Le geste V continue d’être détecté depuis les images de la webcam en arrière-plan. Le retour à l’état présent reprend l’image webcam.
 - La vidéo est silencieuse : OpenCV lit les images, pas la piste audio.
@@ -41,4 +42,4 @@ Les propriétés de position, de cadence et de taille dépendent du backend vid�
 - `src/meet_master/core/video_loop.py` : décodage, cadence, boucle et mise à l’échelle.
 - `src/meet_master/platforms/linux/webcam.py` : choix caméra/clip selon l’état présent/absent.
 - `src/meet_master/platforms/linux/background_capture.py` : compte à rebours et capture temporaire du fond.
-- `src/meet_master/cli.py` : option `--away-video` pour remplacer la capture automatique.
+- `src/meet_master/cli.py` : option `--away-video` pour choisir le clip d’absence ; la référence de fond reste capturée.

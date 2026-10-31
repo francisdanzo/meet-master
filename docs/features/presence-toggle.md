@@ -21,7 +21,7 @@
 meet-master preview --gestures
 ```
 
-Au démarrage de `--gestures`, sors du champ cinq secondes pendant que Meet Master prépare un clip du fond. Montre ✌️ et maintiens-le brièvement : l’image se fragmente en mosaïque lumineuse avant de passer sur le clip en boucle. Relâche le signe, puis montre-le de nouveau pour révéler l’image webcam avec le même effet.
+Au démarrage de `--gestures`, sors du champ cinq secondes pendant que Meet Master prépare le clip et la référence du fond. Montre ✌️ et maintiens-le brièvement : ta silhouette estimée se fragmente en mosaïque lumineuse avant de passer sur le clip en boucle, en laissant le décor tranquille. Relâche le signe, puis montre-le de nouveau pour révéler la silhouette webcam avec le même effet.
 
 ## Limites actuelles
 

@@ -8,6 +8,7 @@ from __future__ import annotations
 
 from meet_master.core.cache import create_session_cache
 from meet_master.core.frame_transition import FrameTransition
+from meet_master.core.foreground import ForegroundSegmenter
 from meet_master.core.gesture_recognizer import GestureObservation, GestureRecognizer
 from meet_master.core.presence import PresenceController, PresenceState
 from meet_master.core.video_loop import VideoLoop
@@ -88,24 +89,28 @@ def preview(
     window_name = "Meet Master — aperçu webcam"
     temporary_video_dir = None
     transition = FrameTransition(cv2)
+    foreground_segmenter = None
     last_composed_frame = None
 
     try:
-        if recognize_gestures and replacement_video is None:
+        if recognize_gestures:
             temporary_video_dir = create_session_cache()
             background_path = f"{temporary_video_dir.name}/arriere-plan.avi"
             print("Préparation de la vidéo d’absence : sors du champ pendant 5 secondes.")
-            frame_count = record_absence_background(
+            frame_count, background_reference = record_absence_background(
                 capture,
                 cv2,
                 background_path,
                 window_name,
                 mirror=mirror,
             )
-            replacement_video = VideoLoop(background_path)
+            foreground_segmenter = ForegroundSegmenter(cv2, background_reference)
+            if replacement_video is None:
+                replacement_video = VideoLoop(background_path)
             print(
                 f"Fond enregistré ({frame_count} images). "
-                f"Clip en cache : {background_path} (supprimé à la fermeture)."
+                f"Référence de silhouette prête. Cache de session : {temporary_video_dir.name} "
+                "(supprimé à la fermeture)."
             )
 
         while True:
@@ -128,9 +133,12 @@ def preview(
                         if replacement_video is not None:
                             replacement_video.restart()
                         transition_source = frame
+                        transition_mask = foreground_segmenter.mask(frame)
+                        transition.start(transition_source, transition_mask, "disappear")
                     else:
                         transition_source = last_composed_frame if last_composed_frame is not None else frame
-                    transition.start(transition_source)
+                        transition_mask = foreground_segmenter.mask(frame)
+                        transition.start(transition_source, transition_mask, "appear")
 
             if presence is not None and presence.state is PresenceState.AWAY:
                 if replacement_video is not None:
@@ -139,7 +147,12 @@ def preview(
                     frame = frame.copy()
                     frame[:] = (20, 16, 32)
             if transition.active:
-                frame = transition.render(frame)
+                live_mask = (
+                    foreground_segmenter.mask(frame)
+                    if foreground_segmenter is not None and transition.direction == "appear"
+                    else None
+                )
+                frame = transition.render(frame, foreground_mask=live_mask)
             last_composed_frame = frame.copy()
 
             if presence is not None and presence.state is PresenceState.AWAY:

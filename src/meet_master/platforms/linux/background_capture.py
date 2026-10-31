@@ -6,6 +6,8 @@ import math
 from pathlib import Path
 import time
 
+import numpy as np
+
 
 def record_absence_background(
     capture,
@@ -15,7 +17,7 @@ def record_absence_background(
     mirror: bool = True,
     leave_seconds: float = 5.0,
     record_seconds: float = 3.0,
-) -> int:
+) -> tuple[int, object]:
     """Prompt the user to leave frame, then record a short background clip.
 
     The file is encoded as a small, silent MJPEG AVI. The caller owns its
@@ -80,6 +82,7 @@ def record_absence_background(
     next_frame_at = started_at
     frame_interval = 1.0 / 15.0
     frame_count = 0
+    background_sum = None
     try:
         while time.monotonic() < deadline:
             frame = _read_frame(capture)
@@ -88,6 +91,11 @@ def record_absence_background(
             recorded_frame = cv2.resize(recorded_frame, (output_width, output_height))
             if now >= next_frame_at:
                 writer.write(recorded_frame)
+                if background_sum is None:
+                    background_sum = np.zeros(
+                        (output_height, output_width, 3), dtype=np.float32
+                    )
+                cv2.accumulate(recorded_frame, background_sum)
                 frame_count += 1
                 next_frame_at += frame_interval
                 if next_frame_at < now:
@@ -113,7 +121,8 @@ def record_absence_background(
 
     if frame_count == 0 or not output_path.is_file() or output_path.stat().st_size == 0:
         raise RuntimeError("la capture du fond n’a enregistré aucune image")
-    return frame_count
+    reference = cv2.convertScaleAbs(background_sum, alpha=1.0 / frame_count)
+    return frame_count, reference
 
 
 def _read_frame(capture):
