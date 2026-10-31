@@ -8,10 +8,21 @@ import time
 class FrameTransition:
     """Dissolve only a foreground subject between a frozen and live frame."""
 
-    def __init__(self, cv2, duration: float = 0.7, block_size: tuple[int, int] = (96, 54)):
+    STYLES = ("mosaic", "fade", "flash")
+
+    def __init__(
+        self,
+        cv2,
+        style: str = "mosaic",
+        duration: float = 0.7,
+        block_size: tuple[int, int] = (96, 54),
+    ):
         if duration <= 0:
             raise ValueError("la durée de transition doit être supérieure à zéro")
+        if style not in self.STYLES:
+            raise ValueError(f"style inconnu : {style}")
         self._cv2 = cv2
+        self.style = style
         self.duration = duration
         self._noise = None
         self._source = None
@@ -69,12 +80,10 @@ class FrameTransition:
 
         if self._direction == "disappear":
             subject_mask = self._source_mask
-            selection = cv2.compare(noise, eased, cv2.CMP_GE)
             output = destination_frame.copy()
             subject = source
         else:
             subject_mask = foreground_mask if foreground_mask is not None else self._source_mask
-            selection = cv2.compare(noise, eased, cv2.CMP_LT)
             output = source.copy()
             subject = destination_frame
 
@@ -82,19 +91,39 @@ class FrameTransition:
             subject_mask = cv2.resize(
                 subject_mask, (width, height), interpolation=cv2.INTER_LINEAR
             )
-        selection = cv2.bitwise_and(selection, subject_mask)
+        if self.style == "fade":
+            selection = np.full((height, width), 255, dtype=np.uint8)
+            opacity = 1.0 - eased if self._direction == "disappear" else eased
+        else:
+            comparison = cv2.CMP_GE if self._direction == "disappear" else cv2.CMP_LT
+            selection = cv2.compare(noise, eased, comparison)
+            opacity = 1.0
 
-        alpha = cv2.multiply(subject_mask, selection, scale=1.0 / 255.0)
-        alpha_float = alpha.astype(np.float32)[:, :, None] / 255.0
+        selection = cv2.bitwise_and(selection, subject_mask)
+        alpha = (subject_mask.astype(np.float32) / 255.0) * (
+            selection.astype(np.float32) / 255.0
+        )
+        alpha *= opacity
+        alpha_float = alpha[:, :, None]
         output = (
             subject.astype(np.float32) * alpha_float
             + output.astype(np.float32) * (1.0 - alpha_float)
         ).clip(0, 255).astype(np.uint8)
 
+        if self.style == "flash":
+            flash = max(0.0, 1.0 - abs(progress - 0.11) / 0.11)
+            if flash > 0.0:
+                flash_alpha = (subject_mask.astype(np.float32) / 255.0 * flash)[:, :, None]
+                output = (
+                    output.astype(np.float32) * (1.0 - flash_alpha)
+                    + 255.0 * flash_alpha
+                ).clip(0, 255).astype(np.uint8)
+
         # A narrow cyan-white fringe makes the moving mosaic boundary visible.
         if 0.04 < eased < 0.98:
             kernel = cv2.getStructuringElement(cv2.MORPH_RECT, (3, 3))
-            edge = cv2.morphologyEx(selection, cv2.MORPH_GRADIENT, kernel)
+            edge_source = (alpha * 255.0).clip(0, 255).astype(np.uint8)
+            edge = cv2.morphologyEx(edge_source, cv2.MORPH_GRADIENT, kernel)
             glow = cv2.cvtColor(edge, cv2.COLOR_GRAY2BGR)
             glow[:, :, 0] = edge
             glow[:, :, 1] = edge

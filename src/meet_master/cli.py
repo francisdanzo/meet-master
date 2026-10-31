@@ -63,7 +63,14 @@ def _build_parser() -> argparse.ArgumentParser:
     )
     preview.add_argument(
         "--away-video", metavar="FICHIER",
-        help="utiliser ce clip pendant l’absence au lieu d’enregistrer le fond (nécessite --gestures)",
+        help="utiliser ce clip pendant l’absence (nécessite --gestures ; le fond est toujours capturé)",
+    )
+    preview.add_argument(
+        "--transition",
+        choices=("mosaic", "fade", "flash"),
+        default="mosaic",
+        metavar="EFFET",
+        help="effet sur la silhouette : mosaic, fade ou flash (défaut : mosaic ; nécessite --gestures)",
     )
     return parser
 
@@ -78,6 +85,8 @@ def main() -> int:
             parser.error("la prévisualisation webcam est actuellement disponible sous Linux uniquement")
         if args.away_video and not args.gestures:
             parser.error("--away-video nécessite aussi --gestures")
+        if args.transition != "mosaic" and not args.gestures:
+            parser.error("--transition nécessite aussi --gestures")
 
         # Import lazily so importing the CLI or requesting --help does not
         # require an active graphical session or camera device.
@@ -93,6 +102,7 @@ def main() -> int:
                 model_path=args.model,
                 gesture_threshold=args.gesture_threshold,
                 away_video_path=args.away_video,
+                transition_style=args.transition,
             )
         except RuntimeError as error:
             print(f"Erreur : {error}", file=sys.stderr)

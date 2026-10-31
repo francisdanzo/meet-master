@@ -24,6 +24,7 @@ def preview(
     model_path: str | None = None,
     gesture_threshold: float = 0.50,
     away_video_path: str | None = None,
+    transition_style: str = "mosaic",
 ) -> int:
     """Show a webcam preview until the user presses q or Escape.
 
@@ -37,6 +38,7 @@ def preview(
         gesture_threshold: Minimum classifier score to mark a gesture as recognized.
         away_video_path: Optional local clip; otherwise gesture mode records
             a temporary background clip at startup.
+        transition_style: Foreground transition style: mosaic, fade, or flash.
 
     Returns:
         Zero after a normal user exit.
@@ -88,7 +90,7 @@ def preview(
     capture.set(cv2.CAP_PROP_FRAME_HEIGHT, height)
     window_name = "Meet Master — aperçu webcam"
     temporary_video_dir = None
-    transition = FrameTransition(cv2)
+    transition = FrameTransition(cv2, style=transition_style)
     foreground_segmenter = None
     last_composed_frame = None
 
