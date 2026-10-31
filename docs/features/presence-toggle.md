@@ -6,6 +6,7 @@
 
 - Meet Master démarre dans l’état **présent** à chaque lancement.
 - Une main qui maintient le signe V (`Victory`) pendant au moins 0,35 seconde déclenche un changement d’état.
+- Le majeur doit être clairement tendu pour que le geste soit un V. Une pose intermédiaire entre V et index levé n’entraîne aucune bascule.
 - Le signe doit être absent pendant 0,25 seconde avant de pouvoir déclencher à nouveau. Tenir le V ne fait donc basculer l’état qu’une fois.
 - Le même signe sert au départ et au retour : présent → absent → présent.
 - Si deux mains montrent le V en même temps, le contrôleur ne bascule qu’une seule fois.

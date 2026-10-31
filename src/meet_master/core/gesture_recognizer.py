@@ -76,6 +76,15 @@ def _geometric_gesture(world_landmarks, image_landmarks, mirrored_input: bool = 
     ring = extended["ring"]
     pinky = extended["pinky"]
 
+    middle_angle = finger_angles["middle"]
+    if (
+        index
+        and flexed["ring"]
+        and flexed["pinky"]
+        and 125.0 < middle_angle < 150.0
+    ):
+        return "AmbiguousVictoryPointing"
+
     if index and pinky and thumb_extended and flexed["middle"] and flexed["ring"]:
         return "ILoveYou"
     if index and pinky and flexed["middle"] and flexed["ring"] and thumb_flexed:
@@ -279,6 +288,18 @@ class GestureRecognizer:
                 image_landmarks,
                 mirrored_input=mirrored_input,
             )
+            if geometric_gesture == "AmbiguousVictoryPointing":
+                hands.append(
+                    HandGestureObservation(
+                        handedness=handedness,
+                        gesture=None,
+                        confidence=0.0,
+                        candidate=geometric_gesture,
+                        ranked_candidates=(("Victory", 0.0), ("Pointing_Up", 0.0)),
+                        rule_based=True,
+                    )
+                )
+                continue
             if geometric_gesture is not None:
                 hands.append(
                     HandGestureObservation(

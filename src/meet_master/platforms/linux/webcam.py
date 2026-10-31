@@ -203,7 +203,10 @@ def _draw_gesture_status(cv2, frame, observation: GestureObservation, top: int =
             if not candidate_text:
                 candidate_text = "aucun candidat"
 
-            if hand.rule_based:
+            if hand.rule_based and hand.candidate == "AmbiguousVictoryPointing":
+                text = f"Main {side} : ambigu - V ou index; tends mieux le majeur"
+                color = (40, 190, 240)
+            elif hand.rule_based:
                 label = labels.get(hand.gesture, hand.gesture)
                 rotation_note = (
                     ", rotation libre"
