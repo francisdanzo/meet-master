@@ -25,7 +25,7 @@ meet-master preview --gestures --transition fade
 meet-master preview --gestures --transition flash
 ```
 
-- `fade` : la silhouette s’efface ou se révèle en douceur, avec un contour adouci et sans halo. C’est le réglage par défaut.
+- `fade` : la silhouette s’efface ou se révèle en douceur, avec un contour lumineux. C’est le réglage par défaut.
 - `flash` : un éclat blanc souligne brièvement la silhouette pendant son fondu.
 
 Les deux effets durent environ 700 ms et sont appliqués au masque de la personne uniquement. Le choix s’applique dans les deux sens.
