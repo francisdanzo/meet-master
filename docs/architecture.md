@@ -23,12 +23,13 @@ Caméra virtuelle (adaptateur de plateforme)
 Zoom / Meet / Teams ou autre application
 ```
 
-Aujourd’hui, la capture webcam Linux, la reconnaissance gestuelle partagée et la bascule présent/absent dans l’aperçu sont codées. La composition avec vidéo de remplacement, les effets et les sorties caméra virtuelle restent des étapes futures.
+Aujourd’hui, la capture webcam Linux, la reconnaissance gestuelle, la bascule de présence et la lecture en boucle d’un clip local dans l’aperçu sont codées. Les effets et les sorties caméra virtuelle restent des étapes futures.
 
 ## Organisation
 
 - `src/meet_master/cli.py` : options de commande et sélection de l’adaptateur. Il ne doit pas contenir le traitement d’image.
 - `src/meet_master/core/` : types et logique qui doivent pouvoir être réutilisés par les deux plateformes, dont le client de reconnaissance gestuelle MediaPipe.
+- `src/meet_master/core/video_loop.py` : lecture à cadence contrôlée, redémarrage au début et mise à l’échelle avec bandes sans recadrage.
 - `src/meet_master/platforms/linux/` : accès Linux à la webcam, puis à la sortie caméra virtuelle.
 - `src/meet_master/platforms/windows/` : futur accès Windows. Garder les détails Windows hors du cœur.
 - `docs/features/` : fiche par fonctionnalité avec son état, son comportement, ses limites et les décisions encore ouvertes.
@@ -41,7 +42,7 @@ Aujourd’hui, la capture webcam Linux, la reconnaissance gestuelle partagée et
 4. Chaque image BGR est éventuellement inversée horizontalement, annotée, puis affichée dans une fenêtre locale.
 5. `q` ou `Échap` arrête la boucle. Le bloc `finally` libère la webcam et ferme les fenêtres OpenCV.
 
-Avec `--gestures`, chaque trame affichée est aussi envoyée au reconnaisseur partagé. Celui-ci convertit BGR en RGB, appelle MediaPipe en mode vidéo avec un horodatage monotone et renvoie une observation typée. Des règles sur les angles articulaires 3D peuvent remplacer le classement du modèle pour des signes choisis dont la forme des doigts suffit. `core/presence.py` confirme ensuite le signe V, bascule l’état présent/absent et impose un relâchement avant une nouvelle bascule. L’adaptateur Linux affiche l’image webcam ou la carte d’absence selon cet état.
+Avec `--gestures`, chaque trame caméra est envoyée au reconnaisseur partagé. Celui-ci convertit BGR en RGB, appelle MediaPipe en mode vidéo avec un horodatage monotone et renvoie une observation typée. Des règles sur les angles articulaires 3D peuvent remplacer le classement du modèle pour des signes choisis. `core/presence.py` confirme le signe V, bascule l’état présent/absent et impose un relâchement avant une nouvelle bascule. En absence, l’adaptateur Linux affiche soit la carte provisoire, soit les images de `core/video_loop.py`; la lecture webcam continue en arrière-plan pour détecter le geste de retour.
 
 ## Prochaines frontières à stabiliser
 

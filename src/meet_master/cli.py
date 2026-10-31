@@ -61,6 +61,10 @@ def _build_parser() -> argparse.ArgumentParser:
         "--gesture-threshold", type=_confidence_score, default=0.50, metavar="SCORE",
         help="score minimal d’un geste reconnu, de 0 à 1 (défaut : 0.50)",
     )
+    preview.add_argument(
+        "--away-video", metavar="FICHIER",
+        help="lire cette vidéo en boucle pendant l’absence (nécessite --gestures)",
+    )
     return parser
 
 
@@ -72,6 +76,8 @@ def main() -> int:
     if args.command == "preview":
         if not sys.platform.startswith("linux"):
             parser.error("la prévisualisation webcam est actuellement disponible sous Linux uniquement")
+        if args.away_video and not args.gestures:
+            parser.error("--away-video nécessite aussi --gestures")
 
         # Import lazily so importing the CLI or requesting --help does not
         # require an active graphical session or camera device.
@@ -86,6 +92,7 @@ def main() -> int:
                 recognize_gestures=args.gestures,
                 model_path=args.model,
                 gesture_threshold=args.gesture_threshold,
+                away_video_path=args.away_video,
             )
         except RuntimeError as error:
             print(f"Erreur : {error}", file=sys.stderr)

@@ -4,14 +4,14 @@ Meet Master est un projet de caméra virtuelle pour les réunions en ligne. Un g
 
 ## État actuel
 
-La première fonction disponible est l’aperçu local de la webcam sous Linux. Elle permet de vérifier l’accès caméra avant d’ajouter la détection des gestes et la caméra virtuelle.
+Le prototype permet de prévisualiser la webcam, détecter des gestes, basculer l’aperçu en absence avec ✌️ et lire un clip local en boucle pendant cette absence.
 
 | Fonctionnalité | État | Documentation |
 |---|---|---|
 | Aperçu webcam Linux | Disponible | [Guide de l’aperçu](docs/features/webcam-preview.md) |
 | Reconnaissance des gestes dans l’aperçu | Prototype disponible | [Fonctionnement et limites](docs/features/gesture-detection.md) |
 | Basculer présent/absent avec ✌️ | Prototype Linux | [Fiche de la bascule](docs/features/presence-toggle.md) |
-| Vidéo de remplacement en boucle | À concevoir | [Spécification](docs/features/replacement-video.md) |
+| Vidéo de remplacement en boucle | Prototype Linux | [Fonctionnement et limites](docs/features/replacement-video.md) |
 | Transitions de disparition et de retour | À concevoir | [Spécification](docs/features/transitions.md) |
 | Caméra virtuelle Linux | À concevoir | [Spécification](docs/features/virtual-camera-linux.md) |
 | Intégration Windows | À concevoir | [Spécification](docs/features/windows.md) |
@@ -63,12 +63,13 @@ meet-master preview --no-mirror
 meet-master preview --gestures
 meet-master preview --gestures --gesture-threshold 0.35
 meet-master preview --gestures --model /chemin/vers/gesture_recognizer.task
+meet-master preview --gestures --away-video /chemin/vers/ma-video.mp4
 python -m meet_master --help
 ```
 
 La résolution demandée dépend des modes pris en charge par la webcam et son pilote. En mode standard, l’aperçu ne sauvegarde pas les images et ne se connecte pas au réseau. Il ne fournit pas encore de caméra virtuelle aux logiciels de réunion.
 
-Avec `--gestures`, le programme détecte jusqu’à deux mains et affiche séparément pour chacune son côté ainsi que les trois meilleures prédictions et leurs scores. Des règles géométriques reconnaissent aussi `✌️`, `🤟` et `🤘` quelle que soit l’orientation de la main. Le modèle officiel est téléchargé une seule fois dans le cache utilisateur au premier lancement. Cette étape nécessite une connexion Internet ; un modèle local peut être fourni avec `--model`. La reconnaissance n’active pas encore les transitions ni la vidéo de remplacement. Consultez la [fiche gestes](docs/features/gesture-detection.md) et le [catalogue des emojis](docs/features/gesture-catalog.md) pour connaître les détails, les limites et les gestes encore à ajouter.
+Avec `--gestures`, le programme détecte jusqu’à deux mains, affiche les prédictions et utilise ✌️ pour basculer entre présent et absent. `--away-video` lit un fichier vidéo local en boucle pendant l’absence ; sans ce paramètre, l’aperçu affiche la carte sombre provisoire. La sortie reste un aperçu local : Zoom, Meet et Teams ne reçoivent pas encore ce flux. Consultez la [fiche de la vidéo de remplacement](docs/features/replacement-video.md), la [fiche gestes](docs/features/gesture-detection.md) et le [catalogue des emojis](docs/features/gesture-catalog.md) pour les détails et limites.
 
 ## Structure du code
 

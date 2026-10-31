@@ -13,10 +13,10 @@ L’utilisateur souhaite un effet cinématographique inspiré de la disparition 
 ## Séquence visée
 
 1. Le signe ✌️ confirmé bascule l’aperçu de présent à absent.
-2. Une carte sombre remplace l’image de la webcam dans l’aperçu local.
+2. Si `--away-video` est fourni, le clip local démarre et tourne en boucle ; sinon, une carte sombre s’affiche.
 3. Le signe ✌️ suivant revient à l’image webcam.
 
-La vidéo en boucle, la caméra virtuelle et les effets de disparition/apparition ne sont pas encore implémentés. Voir la [fiche de bascule présent/absent](presence-toggle.md).
+La vidéo en boucle est disponible dans l’aperçu. La caméra virtuelle et les effets de disparition/apparition restent à implémenter. Voir la [fiche de bascule présent/absent](presence-toggle.md) et la [fiche de la vidéo de remplacement](replacement-video.md).
 
 ## Choix à documenter avant implémentation
 

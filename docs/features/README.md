@@ -8,7 +8,7 @@ Chaque fiche décrit une fonction selon le même modèle : **état**, **but**, *
 | Reconnaissance gestuelle dans l’aperçu | [gesture-detection.md](gesture-detection.md) | Prototype disponible |
 | Bascule présent/absent par signe V | [presence-toggle.md](presence-toggle.md) | Prototype Linux |
 | Catalogue et couverture des gestes | [gesture-catalog.md](gesture-catalog.md) | Progressif |
-| Vidéo de remplacement | [replacement-video.md](replacement-video.md) | À concevoir |
+| Vidéo de remplacement | [replacement-video.md](replacement-video.md) | Prototype Linux |
 | Effets de transition | [transitions.md](transitions.md) | À concevoir |
 | Caméra virtuelle Linux | [virtual-camera-linux.md](virtual-camera-linux.md) | À concevoir |
 | Support Windows | [windows.md](windows.md) | À concevoir |
