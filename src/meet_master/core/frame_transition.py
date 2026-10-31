@@ -1,4 +1,4 @@
-"""A pixel-dissolve transition constrained to the detected foreground."""
+"""Smooth foreground transitions with an optional comic-style flash."""
 
 from __future__ import annotations
 
@@ -6,16 +6,15 @@ import time
 
 
 class FrameTransition:
-    """Dissolve only a foreground subject between a frozen and live frame."""
+    """Fade only a foreground subject between a frozen and live frame."""
 
-    STYLES = ("mosaic", "fade", "flash")
+    STYLES = ("fade", "flash")
 
     def __init__(
         self,
         cv2,
-        style: str = "mosaic",
+        style: str = "fade",
         duration: float = 0.7,
-        block_size: tuple[int, int] = (96, 54),
     ):
         if duration <= 0:
             raise ValueError("la durée de transition doit être supérieure à zéro")
@@ -24,10 +23,8 @@ class FrameTransition:
         self._cv2 = cv2
         self.style = style
         self.duration = duration
-        self._noise = None
         self._source = None
         self._started_at = 0.0
-        self._block_size = block_size
         self._direction = "disappear"
         self._source_mask = None
 
@@ -49,16 +46,11 @@ class FrameTransition:
         """Freeze the base image and begin a subject-only dissolve."""
         if direction not in {"disappear", "appear"}:
             raise ValueError("la direction doit être 'disappear' ou 'appear'")
-        import numpy as np
-
         cv2 = self._cv2
         self._source = source_frame.copy()
         self._source_mask = foreground_mask.copy()
         self._direction = direction
         self._started_at = time.monotonic() if now is None else now
-        cv2.setRNGSeed(42)
-        self._noise = np.empty((self._block_size[1], self._block_size[0]), dtype=np.float32)
-        cv2.randu(self._noise, 0.0, 1.0)
 
     def render(self, destination_frame, foreground_mask=None, now: float | None = None):
         """Return one frame with only the foreground subject dissolving."""
@@ -70,10 +62,9 @@ class FrameTransition:
 
         timestamp = time.monotonic() if now is None else now
         progress = min(1.0, max(0.0, (timestamp - self._started_at) / self.duration))
-        # Ease in the disappearance, then let the last fragments clear quickly.
+        # Smooth acceleration/deceleration keeps both directions feeling natural.
         eased = progress * progress * (3.0 - 2.0 * progress)
         height, width = destination_frame.shape[:2]
-        noise = cv2.resize(self._noise, (width, height), interpolation=cv2.INTER_NEAREST)
         source = self._source
         if source.shape[:2] != destination_frame.shape[:2]:
             source = cv2.resize(source, (width, height), interpolation=cv2.INTER_LINEAR)
@@ -91,18 +82,8 @@ class FrameTransition:
             subject_mask = cv2.resize(
                 subject_mask, (width, height), interpolation=cv2.INTER_LINEAR
             )
-        if self.style == "fade":
-            selection = np.full((height, width), 255, dtype=np.uint8)
-            opacity = 1.0 - eased if self._direction == "disappear" else eased
-        else:
-            comparison = cv2.CMP_GE if self._direction == "disappear" else cv2.CMP_LT
-            selection = cv2.compare(noise, eased, comparison)
-            opacity = 1.0
-
-        selection = cv2.bitwise_and(selection, subject_mask)
-        alpha = (subject_mask.astype(np.float32) / 255.0) * (
-            selection.astype(np.float32) / 255.0
-        )
+        opacity = 1.0 - eased if self._direction == "disappear" else eased
+        alpha = subject_mask.astype(np.float32) / 255.0
         alpha *= opacity
         alpha_float = alpha[:, :, None]
         output = (
@@ -111,7 +92,8 @@ class FrameTransition:
         ).clip(0, 255).astype(np.uint8)
 
         if self.style == "flash":
-            flash = max(0.0, 1.0 - abs(progress - 0.11) / 0.11)
+            flash_center = 0.12 if self._direction == "disappear" else 0.88
+            flash = max(0.0, 1.0 - abs(progress - flash_center) / 0.12)
             if flash > 0.0:
                 flash_alpha = (subject_mask.astype(np.float32) / 255.0 * flash)[:, :, None]
                 output = (
@@ -119,7 +101,7 @@ class FrameTransition:
                     + 255.0 * flash_alpha
                 ).clip(0, 255).astype(np.uint8)
 
-        # A narrow cyan-white fringe makes the moving mosaic boundary visible.
+        # A narrow cyan-white fringe keeps the silhouette readable in both styles.
         if 0.04 < eased < 0.98:
             kernel = cv2.getStructuringElement(cv2.MORPH_RECT, (3, 3))
             edge_source = (alpha * 255.0).clip(0, 255).astype(np.uint8)
@@ -131,7 +113,6 @@ class FrameTransition:
 
         if progress >= 1.0:
             self._source = None
-            self._noise = None
             self._source_mask = None
             return destination_frame
         return output

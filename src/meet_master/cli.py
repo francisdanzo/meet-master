@@ -67,10 +67,10 @@ def _build_parser() -> argparse.ArgumentParser:
     )
     preview.add_argument(
         "--transition",
-        choices=("mosaic", "fade", "flash"),
-        default="mosaic",
+        choices=("fade", "flash"),
+        default="fade",
         metavar="EFFET",
-        help="effet sur la silhouette : mosaic, fade ou flash (défaut : mosaic ; nécessite --gestures)",
+        help="effet sur la silhouette : fade ou flash (défaut : fade ; nécessite --gestures)",
     )
     return parser
 
@@ -85,7 +85,7 @@ def main() -> int:
             parser.error("la prévisualisation webcam est actuellement disponible sous Linux uniquement")
         if args.away_video and not args.gestures:
             parser.error("--away-video nécessite aussi --gestures")
-        if args.transition != "mosaic" and not args.gestures:
+        if args.transition != "fade" and not args.gestures:
             parser.error("--transition nécessite aussi --gestures")
 
         # Import lazily so importing the CLI or requesting --help does not

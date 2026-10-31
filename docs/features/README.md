@@ -9,6 +9,6 @@ Chaque fiche décrit une fonction selon le même modèle : **état**, **but**, *
 | Bascule présent/absent par signe V | [presence-toggle.md](presence-toggle.md) | Prototype Linux |
 | Catalogue et couverture des gestes | [gesture-catalog.md](gesture-catalog.md) | Progressif |
 | Vidéo de remplacement | [replacement-video.md](replacement-video.md) | Prototype Linux |
-| Effets de transition | [transitions.md](transitions.md) | Mosaïque, fondu et flash disponibles dans l’aperçu Linux |
+| Effets de transition | [transitions.md](transitions.md) | Fondu et flash disponibles dans l’aperçu Linux |
 | Caméra virtuelle Linux | [virtual-camera-linux.md](virtual-camera-linux.md) | À concevoir |
 | Support Windows | [windows.md](windows.md) | À concevoir |

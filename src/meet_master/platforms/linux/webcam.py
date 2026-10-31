@@ -24,7 +24,7 @@ def preview(
     model_path: str | None = None,
     gesture_threshold: float = 0.50,
     away_video_path: str | None = None,
-    transition_style: str = "mosaic",
+    transition_style: str = "fade",
 ) -> int:
     """Show a webcam preview until the user presses q or Escape.
 
@@ -38,7 +38,7 @@ def preview(
         gesture_threshold: Minimum classifier score to mark a gesture as recognized.
         away_video_path: Optional local clip; otherwise gesture mode records
             a temporary background clip at startup.
-        transition_style: Foreground transition style: mosaic, fade, or flash.
+        transition_style: Foreground transition style: fade or flash.
 
     Returns:
         Zero after a normal user exit.

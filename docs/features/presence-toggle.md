@@ -21,7 +21,7 @@
 meet-master preview --gestures
 ```
 
-Au démarrage de `--gestures`, sors du champ cinq secondes pendant que Meet Master prépare le clip et la référence du fond. Montre ✌️ et maintiens-le brièvement : l’effet choisi sur `--transition` s’applique à ta silhouette estimée avant de passer sur le clip en boucle, en laissant le décor tranquille. Relâche le signe, puis montre-le de nouveau pour révéler la silhouette webcam avec le même effet.
+Au démarrage de `--gestures`, sors du champ cinq secondes pendant que Meet Master prépare le clip et la référence du fond. Montre ✌️ et maintiens-le brièvement : le fondu ou le flash choisi avec `--transition` s’applique à ta silhouette estimée avant de passer sur le clip en boucle, en laissant le décor tranquille. Relâche le signe, puis montre-le de nouveau pour révéler la silhouette webcam avec le même effet.
 
 ## Limites actuelles
 

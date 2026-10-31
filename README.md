@@ -12,7 +12,7 @@ Le prototype permet de prévisualiser la webcam, détecter des gestes, basculer 
 | Reconnaissance des gestes dans l’aperçu | Prototype disponible | [Fonctionnement et limites](docs/features/gesture-detection.md) |
 | Basculer présent/absent avec ✌️ | Prototype Linux | [Fiche de la bascule](docs/features/presence-toggle.md) |
 | Vidéo d’absence enregistrée automatiquement | Prototype Linux | [Fonctionnement et limites](docs/features/replacement-video.md) |
-| Transitions mosaïque, fondu et flash sur la silhouette | Prototype Linux | [Fonctionnement et limites](docs/features/transitions.md) |
+| Fondu et flash sur la silhouette | Prototype Linux | [Fonctionnement et limites](docs/features/transitions.md) |
 | Caméra virtuelle Linux | À concevoir | [Spécification](docs/features/virtual-camera-linux.md) |
 | Intégration Windows | À concevoir | [Spécification](docs/features/windows.md) |
 
@@ -69,7 +69,7 @@ python -m meet_master --help
 
 La résolution demandée dépend des modes pris en charge par la webcam et son pilote. En mode standard, l’aperçu ne sauvegarde pas les images et ne se connecte pas au réseau. Il ne fournit pas encore de caméra virtuelle aux logiciels de réunion.
 
-Avec `--gestures`, le programme détecte jusqu’à deux mains, affiche les prédictions et utilise ✌️ pour basculer entre présent et absent. L’effet de transition s’applique à la silhouette estimée à partir du fond vide capturé au lancement. Choisis `--transition mosaic` (par défaut), `--transition fade` ou `--transition flash`. Au démarrage, le programme demande de sortir du champ, attend cinq secondes et enregistre trois secondes dans le cache Meet Master (`~/.cache/meet-master` sous Linux, `%LOCALAPPDATA%\MeetMaster\Cache` sous Windows) ; le clip tourne en boucle pendant l’absence et son sous-dossier de session est supprimé à la fermeture. `--away-video` permet de choisir un autre clip, mais la capture du fond reste nécessaire pour estimer la silhouette. L’effet est visible dans l’aperçu local : Zoom, Meet et Teams ne reçoivent pas encore ce flux. Consultez la [fiche des transitions](docs/features/transitions.md), la [fiche de la vidéo de remplacement](docs/features/replacement-video.md), la [fiche gestes](docs/features/gesture-detection.md) et le [catalogue des emojis](docs/features/gesture-catalog.md) pour les détails et limites.
+Avec `--gestures`, le programme détecte jusqu’à deux mains, affiche les prédictions et utilise ✌️ pour basculer entre présent et absent. L’effet de transition s’applique à la silhouette estimée à partir du fond vide capturé au lancement. Choisis `--transition fade` (par défaut) ou `--transition flash`. Au démarrage, le programme demande de sortir du champ, attend cinq secondes et enregistre trois secondes dans le cache Meet Master (`~/.cache/meet-master` sous Linux, `%LOCALAPPDATA%\MeetMaster\Cache` sous Windows) ; le clip tourne en boucle pendant l’absence et son sous-dossier de session est supprimé à la fermeture. `--away-video` permet de choisir un autre clip, mais la capture du fond reste nécessaire pour estimer la silhouette. L’effet est visible dans l’aperçu local : Zoom, Meet et Teams ne reçoivent pas encore ce flux. Consultez la [fiche des transitions](docs/features/transitions.md), la [fiche de la vidéo de remplacement](docs/features/replacement-video.md), la [fiche gestes](docs/features/gesture-detection.md) et le [catalogue des emojis](docs/features/gesture-catalog.md) pour les détails et limites.
 
 ## Structure du code
 
