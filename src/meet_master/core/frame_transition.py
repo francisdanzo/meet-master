@@ -101,16 +101,6 @@ class FrameTransition:
                     + 255.0 * flash_alpha
                 ).clip(0, 255).astype(np.uint8)
 
-        # A narrow cyan-white fringe keeps the silhouette readable in both styles.
-        if 0.04 < eased < 0.98:
-            kernel = cv2.getStructuringElement(cv2.MORPH_RECT, (3, 3))
-            edge_source = (alpha * 255.0).clip(0, 255).astype(np.uint8)
-            edge = cv2.morphologyEx(edge_source, cv2.MORPH_GRADIENT, kernel)
-            glow = cv2.cvtColor(edge, cv2.COLOR_GRAY2BGR)
-            glow[:, :, 0] = edge
-            glow[:, :, 1] = edge
-            output = cv2.addWeighted(output, 1.0, glow, 0.48, 0)
-
         if progress >= 1.0:
             self._source = None
             self._source_mask = None
