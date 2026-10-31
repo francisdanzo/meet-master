@@ -7,6 +7,7 @@ replacement clip explicitly.
 from __future__ import annotations
 
 from meet_master.core.cache import create_session_cache
+from meet_master.core.frame_transition import FrameTransition
 from meet_master.core.gesture_recognizer import GestureObservation, GestureRecognizer
 from meet_master.core.presence import PresenceController, PresenceState
 from meet_master.core.video_loop import VideoLoop
@@ -86,6 +87,8 @@ def preview(
     capture.set(cv2.CAP_PROP_FRAME_HEIGHT, height)
     window_name = "Meet Master — aperçu webcam"
     temporary_video_dir = None
+    transition = FrameTransition(cv2)
+    last_composed_frame = None
 
     try:
         if recognize_gestures and replacement_video is None:
@@ -120,52 +123,45 @@ def preview(
             )
             if presence is not None and observation is not None:
                 new_state = presence.update(observation)
-                if new_state is PresenceState.AWAY and replacement_video is not None:
-                    replacement_video.restart()
+                if new_state is not None:
+                    if new_state is PresenceState.AWAY:
+                        if replacement_video is not None:
+                            replacement_video.restart()
+                        transition_source = frame
+                    else:
+                        transition_source = last_composed_frame if last_composed_frame is not None else frame
+                    transition.start(transition_source)
 
             if presence is not None and presence.state is PresenceState.AWAY:
                 if replacement_video is not None:
                     frame = replacement_video.read(frame.shape[1], frame.shape[0])
-                    cv2.putText(
-                        frame,
-                        "ABSENCE ACTIVE | Montre V pour revenir",
-                        (16, 32),
-                        cv2.FONT_HERSHEY_SIMPLEX,
-                        0.65,
-                        (255, 255, 255),
-                        2,
-                        cv2.LINE_AA,
-                    )
                 else:
                     frame = frame.copy()
                     frame[:] = (20, 16, 32)
-                    cv2.putText(
-                        frame,
-                        "ABSENCE ACTIVE",
-                        (24, 64),
-                        cv2.FONT_HERSHEY_SIMPLEX,
-                        1.0,
-                        (255, 255, 255),
-                        2,
-                        cv2.LINE_AA,
-                    )
-                    cv2.putText(
-                        frame,
-                        "Montre le signe V pour revenir",
-                        (24, 104),
-                        cv2.FONT_HERSHEY_SIMPLEX,
-                        0.7,
-                        (190, 200, 230),
-                        2,
-                        cv2.LINE_AA,
-                    )
+            if transition.active:
+                frame = transition.render(frame)
+            last_composed_frame = frame.copy()
+
+            if presence is not None and presence.state is PresenceState.AWAY:
+                # Place status labels after the transition so they stay crisp.
+                cv2.putText(
+                    frame,
+                    "ABSENCE ACTIVE | Montre V pour revenir",
+                    (16, 32),
+                    cv2.FONT_HERSHEY_SIMPLEX,
+                    0.65,
+                    (255, 255, 255),
+                    2,
+                    cv2.LINE_AA,
+                )
+                if replacement_video is None:
                     cv2.putText(
                         frame,
                         "Ecran provisoire - video de remplacement a venir",
-                        (24, 140),
+                        (16, 64),
                         cv2.FONT_HERSHEY_SIMPLEX,
                         0.55,
-                        (150, 160, 190),
+                        (190, 200, 230),
                         1,
                         cv2.LINE_AA,
                     )

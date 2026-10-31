@@ -21,7 +21,7 @@
 meet-master preview --gestures
 ```
 
-Au démarrage de `--gestures`, sors du champ cinq secondes pendant que Meet Master prépare un clip du fond. Montre ✌️ et maintiens-le brièvement : l’aperçu passe sur ce clip en boucle. Relâche le signe, puis montre-le de nouveau pour revenir à l’image webcam.
+Au démarrage de `--gestures`, sors du champ cinq secondes pendant que Meet Master prépare un clip du fond. Montre ✌️ et maintiens-le brièvement : l’image se fragmente en mosaïque lumineuse avant de passer sur le clip en boucle. Relâche le signe, puis montre-le de nouveau pour révéler l’image webcam avec le même effet.
 
 ## Limites actuelles
 
