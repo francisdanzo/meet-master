@@ -6,8 +6,7 @@ replacement clip explicitly.
 
 from __future__ import annotations
 
-from tempfile import TemporaryDirectory
-
+from meet_master.core.cache import create_session_cache
 from meet_master.core.gesture_recognizer import GestureObservation, GestureRecognizer
 from meet_master.core.presence import PresenceController, PresenceState
 from meet_master.core.video_loop import VideoLoop
@@ -90,7 +89,7 @@ def preview(
 
     try:
         if recognize_gestures and replacement_video is None:
-            temporary_video_dir = TemporaryDirectory(prefix="meet-master-")
+            temporary_video_dir = create_session_cache()
             background_path = f"{temporary_video_dir.name}/arriere-plan.avi"
             print("Préparation de la vidéo d’absence : sors du champ pendant 5 secondes.")
             frame_count = record_absence_background(
@@ -103,7 +102,7 @@ def preview(
             replacement_video = VideoLoop(background_path)
             print(
                 f"Fond enregistré ({frame_count} images). "
-                "La vidéo temporaire sera supprimée à la fermeture."
+                f"Clip en cache : {background_path} (supprimé à la fermeture)."
             )
 
         while True:

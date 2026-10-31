@@ -8,7 +8,7 @@
 meet-master preview --gestures --away-video /chemin/vers/ma-video.mp4
 ```
 
-Au lancement de `preview --gestures`, Meet Master demande de sortir du champ. Après cinq secondes de compte à rebours, il enregistre trois secondes d’arrière-plan depuis la webcam et crée un clip silencieux MJPEG dans un dossier temporaire du système (`meet-master-*`). Ce clip est lu en boucle pendant l’absence et le dossier est supprimé quand l’application se ferme. L’enregistrement peut être annulé avec Échap.
+Au lancement de `preview --gestures`, Meet Master demande de sortir du champ. Après cinq secondes de compte à rebours, il enregistre trois secondes d’arrière-plan depuis la webcam et crée un clip silencieux MJPEG dans un sous-dossier de session de son cache : `~/.cache/meet-master` sous Linux (ou `$XDG_CACHE_HOME/meet-master` si cette variable est définie), `%LOCALAPPDATA%\MeetMaster\Cache` sous Windows, et `~/Library/Caches/MeetMaster` sous macOS. Ce clip est lu en boucle pendant l’absence et le sous-dossier de session est supprimé quand l’application se ferme. L’enregistrement peut être annulé avec Échap.
 
 `--away-video` nécessite `--gestures`, car le signe V commande le départ et le retour. Le chemin peut être relatif ou absolu. Cette option remplace la capture automatique et laisse le fichier fourni intact.
 
@@ -18,7 +18,7 @@ Au lancement de `preview --gestures`, Meet Master demande de sortir du champ. Ap
 - À la fin du fichier, le lecteur revient au début et continue en boucle.
 - La vidéo est mise à l’échelle pour tenir dans la résolution de la webcam, sans recadrage ; les bandes latérales ou supérieure/inférieure sont sombres.
 - La capture automatique est réduite à 640×360 au maximum et enregistrée à 15 images par seconde pour limiter l’espace temporaire.
-- La vidéo capturée reste locale et est supprimée à la fermeture normale ou après une erreur de capture.
+- La vidéo capturée reste locale et son sous-dossier de session est supprimé à la fermeture normale ou après une erreur de capture.
 - Le geste V continue d’être détecté depuis les images de la webcam en arrière-plan. Le retour à l’état présent reprend l’image webcam.
 - La vidéo est silencieuse : OpenCV lit les images, pas la piste audio.
 
