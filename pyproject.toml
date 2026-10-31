@@ -16,6 +16,9 @@ dependencies = [
 gestures = [
     "mediapipe>=0.10.21,<1.0",
 ]
+virtual-camera = [
+    "pyvirtualcam>=0.15,<1.0",
+]
 
 [project.scripts]
 meet-master = "meet_master.cli:main"

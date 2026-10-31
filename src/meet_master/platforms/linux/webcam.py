@@ -13,6 +13,7 @@ from meet_master.core.gesture_recognizer import GestureObservation, GestureRecog
 from meet_master.core.presence import PresenceController, PresenceState
 from meet_master.core.video_loop import VideoLoop
 from meet_master.platforms.linux.background_capture import record_absence_background
+from meet_master.platforms.linux.virtual_camera import LinuxVirtualCamera
 
 
 def preview(
@@ -25,6 +26,8 @@ def preview(
     gesture_threshold: float = 0.50,
     away_video_path: str | None = None,
     transition_style: str = "fade",
+    publish_virtual_camera: bool = False,
+    virtual_camera_device: str | None = None,
 ) -> int:
     """Show a webcam preview until the user presses q or Escape.
 
@@ -39,6 +42,8 @@ def preview(
         away_video_path: Optional local clip; otherwise gesture mode records
             a temporary background clip at startup.
         transition_style: Foreground transition style: fade or flash.
+        publish_virtual_camera: Publish the composed output to v4l2loopback.
+        virtual_camera_device: Optional v4l2loopback device path.
 
     Returns:
         Zero after a normal user exit.
@@ -93,6 +98,7 @@ def preview(
     transition = FrameTransition(cv2, style=transition_style)
     foreground_segmenter = None
     last_composed_frame = None
+    virtual_camera = None
 
     try:
         if recognize_gestures:
@@ -156,6 +162,19 @@ def preview(
                 )
                 frame = transition.render(frame, foreground_mask=live_mask)
             last_composed_frame = frame.copy()
+            if publish_virtual_camera:
+                if virtual_camera is None:
+                    camera_fps = float(capture.get(cv2.CAP_PROP_FPS))
+                    if not 1.0 <= camera_fps <= 60.0:
+                        camera_fps = 30.0
+                    virtual_camera = LinuxVirtualCamera(
+                        frame.shape[1],
+                        frame.shape[0],
+                        fps=camera_fps,
+                        device=virtual_camera_device,
+                    )
+                    print(f"Caméra virtuelle active : {virtual_camera.device}")
+                virtual_camera.send(last_composed_frame)
 
             if presence is not None and presence.state is PresenceState.AWAY:
                 # Place status labels after the transition so they stay crisp.
@@ -226,8 +245,12 @@ def preview(
                     if replacement_video is not None:
                         replacement_video.close()
                 finally:
-                    if temporary_video_dir is not None:
-                        temporary_video_dir.cleanup()
+                    try:
+                        if virtual_camera is not None:
+                            virtual_camera.close()
+                    finally:
+                        if temporary_video_dir is not None:
+                            temporary_video_dir.cleanup()
 
     return 0
 

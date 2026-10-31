@@ -72,6 +72,16 @@ def _build_parser() -> argparse.ArgumentParser:
         metavar="EFFET",
         help="effet sur la silhouette : fade ou flash (défaut : fade ; nécessite --gestures)",
     )
+    preview.add_argument(
+        "--virtual-camera",
+        action="store_true",
+        help="publier le flux dans une caméra Linux v4l2loopback",
+    )
+    preview.add_argument(
+        "--virtual-camera-device",
+        metavar="/DEV/VIDEOX",
+        help="choisir le périphérique v4l2loopback (nécessite --virtual-camera)",
+    )
     return parser
 
 
@@ -87,6 +97,8 @@ def main() -> int:
             parser.error("--away-video nécessite aussi --gestures")
         if args.transition != "fade" and not args.gestures:
             parser.error("--transition nécessite aussi --gestures")
+        if args.virtual_camera_device and not args.virtual_camera:
+            parser.error("--virtual-camera-device nécessite aussi --virtual-camera")
 
         # Import lazily so importing the CLI or requesting --help does not
         # require an active graphical session or camera device.
@@ -103,6 +115,8 @@ def main() -> int:
                 gesture_threshold=args.gesture_threshold,
                 away_video_path=args.away_video,
                 transition_style=args.transition,
+                publish_virtual_camera=args.virtual_camera,
+                virtual_camera_device=args.virtual_camera_device,
             )
         except RuntimeError as error:
             print(f"Erreur : {error}", file=sys.stderr)

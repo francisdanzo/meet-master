@@ -10,5 +10,5 @@ Chaque fiche décrit une fonction selon le même modèle : **état**, **but**, *
 | Catalogue et couverture des gestes | [gesture-catalog.md](gesture-catalog.md) | Progressif |
 | Vidéo de remplacement | [replacement-video.md](replacement-video.md) | Prototype Linux |
 | Effets de transition | [transitions.md](transitions.md) | Fondu et flash disponibles dans l’aperçu Linux |
-| Caméra virtuelle Linux | [virtual-camera-linux.md](virtual-camera-linux.md) | À concevoir |
+| Caméra virtuelle Linux | [virtual-camera-linux.md](virtual-camera-linux.md) | Prototype v4l2loopback |
 | Support Windows | [windows.md](windows.md) | À concevoir |
