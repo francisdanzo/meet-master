@@ -63,7 +63,7 @@ def _build_parser() -> argparse.ArgumentParser:
     )
     preview.add_argument(
         "--away-video", metavar="FICHIER",
-        help="lire cette vidéo en boucle pendant l’absence (nécessite --gestures)",
+        help="utiliser ce clip pendant l’absence au lieu d’enregistrer le fond (nécessite --gestures)",
     )
     return parser
 

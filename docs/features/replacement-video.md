@@ -8,13 +8,17 @@
 meet-master preview --gestures --away-video /chemin/vers/ma-video.mp4
 ```
 
-`--away-video` nécessite `--gestures`, car le signe V commande le départ et le retour. Le chemin peut être relatif ou absolu. Sans fichier, Meet Master garde la carte d’absence sombre.
+Au lancement de `preview --gestures`, Meet Master demande de sortir du champ. Après cinq secondes de compte à rebours, il enregistre trois secondes d’arrière-plan depuis la webcam et crée un clip silencieux MJPEG dans un dossier temporaire du système (`meet-master-*`). Ce clip est lu en boucle pendant l’absence et le dossier est supprimé quand l’application se ferme. L’enregistrement peut être annulé avec Échap.
+
+`--away-video` nécessite `--gestures`, car le signe V commande le départ et le retour. Le chemin peut être relatif ou absolu. Cette option remplace la capture automatique et laisse le fichier fourni intact.
 
 ## Comportement
 
 - Le clip commence à sa première image au passage présent → absent.
 - À la fin du fichier, le lecteur revient au début et continue en boucle.
 - La vidéo est mise à l’échelle pour tenir dans la résolution de la webcam, sans recadrage ; les bandes latérales ou supérieure/inférieure sont sombres.
+- La capture automatique est réduite à 640×360 au maximum et enregistrée à 15 images par seconde pour limiter l’espace temporaire.
+- La vidéo capturée reste locale et est supprimée à la fermeture normale ou après une erreur de capture.
 - Le geste V continue d’être détecté depuis les images de la webcam en arrière-plan. Le retour à l’état présent reprend l’image webcam.
 - La vidéo est silencieuse : OpenCV lit les images, pas la piste audio.
 
@@ -36,4 +40,5 @@ Les propriétés de position, de cadence et de taille dépendent du backend vid�
 
 - `src/meet_master/core/video_loop.py` : décodage, cadence, boucle et mise à l’échelle.
 - `src/meet_master/platforms/linux/webcam.py` : choix caméra/clip selon l’état présent/absent.
-- `src/meet_master/cli.py` : option `--away-video`.
+- `src/meet_master/platforms/linux/background_capture.py` : compte à rebours et capture temporaire du fond.
+- `src/meet_master/cli.py` : option `--away-video` pour remplacer la capture automatique.

@@ -42,7 +42,7 @@ Aujourd’hui, la capture webcam Linux, la reconnaissance gestuelle, la bascule 
 4. Chaque image BGR est éventuellement inversée horizontalement, annotée, puis affichée dans une fenêtre locale.
 5. `q` ou `Échap` arrête la boucle. Le bloc `finally` libère la webcam et ferme les fenêtres OpenCV.
 
-Avec `--gestures`, chaque trame caméra est envoyée au reconnaisseur partagé. Celui-ci convertit BGR en RGB, appelle MediaPipe en mode vidéo avec un horodatage monotone et renvoie une observation typée. Des règles sur les angles articulaires 3D peuvent remplacer le classement du modèle pour des signes choisis. `core/presence.py` confirme le signe V, bascule l’état présent/absent et impose un relâchement avant une nouvelle bascule. En absence, l’adaptateur Linux affiche soit la carte provisoire, soit les images de `core/video_loop.py`; la lecture webcam continue en arrière-plan pour détecter le geste de retour.
+Avec `--gestures`, chaque trame caméra est envoyée au reconnaisseur partagé. Celui-ci convertit BGR en RGB, appelle MediaPipe en mode vidéo avec un horodatage monotone et renvoie une observation typée. Des règles sur les angles articulaires 3D peuvent remplacer le classement du modèle pour des signes choisis. `core/presence.py` confirme le signe V, bascule l’état présent/absent et impose un relâchement avant une nouvelle bascule. Au lancement, `platforms/linux/background_capture.py` enregistre le fond dans un dossier temporaire, sauf si un clip explicite est fourni. En absence, `core/video_loop.py` lit ce clip en boucle ; la webcam continue en arrière-plan pour détecter le geste de retour. Le dossier temporaire est supprimé à la fermeture.
 
 ## Prochaines frontières à stabiliser
 

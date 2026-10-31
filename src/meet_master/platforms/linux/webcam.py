@@ -1,15 +1,17 @@
 """Linux webcam capture and local preview.
 
-This platform adapter acquires frames through OpenCV's Video4Linux2 backend
-and displays either the live camera or an optional local replacement clip in
-a desktop preview. It does not publish a virtual camera or save camera frames.
+Gesture mode records a temporary background clip unless the user supplies a
+replacement clip explicitly.
 """
 
 from __future__ import annotations
 
+from tempfile import TemporaryDirectory
+
 from meet_master.core.gesture_recognizer import GestureObservation, GestureRecognizer
 from meet_master.core.presence import PresenceController, PresenceState
 from meet_master.core.video_loop import VideoLoop
+from meet_master.platforms.linux.background_capture import record_absence_background
 
 
 def preview(
@@ -32,7 +34,8 @@ def preview(
         recognize_gestures: Run the shared gesture model and show its result.
         model_path: Optional local MediaPipe model file; otherwise use the cache.
         gesture_threshold: Minimum classifier score to mark a gesture as recognized.
-        away_video_path: Optional local clip to loop while presence is away.
+        away_video_path: Optional local clip; otherwise gesture mode records
+            a temporary background clip at startup.
 
     Returns:
         Zero after a normal user exit.
@@ -83,8 +86,26 @@ def preview(
     capture.set(cv2.CAP_PROP_FRAME_WIDTH, width)
     capture.set(cv2.CAP_PROP_FRAME_HEIGHT, height)
     window_name = "Meet Master — aperçu webcam"
+    temporary_video_dir = None
 
     try:
+        if recognize_gestures and replacement_video is None:
+            temporary_video_dir = TemporaryDirectory(prefix="meet-master-")
+            background_path = f"{temporary_video_dir.name}/arriere-plan.avi"
+            print("Préparation de la vidéo d’absence : sors du champ pendant 5 secondes.")
+            frame_count = record_absence_background(
+                capture,
+                cv2,
+                background_path,
+                window_name,
+                mirror=mirror,
+            )
+            replacement_video = VideoLoop(background_path)
+            print(
+                f"Fond enregistré ({frame_count} images). "
+                "La vidéo temporaire sera supprimée à la fermeture."
+            )
+
         while True:
             ok, frame = capture.read()
             if not ok or frame is None:
@@ -187,10 +208,16 @@ def preview(
         try:
             cv2.destroyAllWindows()
         finally:
-            if recognizer is not None:
-                recognizer.close()
-            if replacement_video is not None:
-                replacement_video.close()
+            try:
+                if recognizer is not None:
+                    recognizer.close()
+            finally:
+                try:
+                    if replacement_video is not None:
+                        replacement_video.close()
+                finally:
+                    if temporary_video_dir is not None:
+                        temporary_video_dir.cleanup()
 
     return 0
 

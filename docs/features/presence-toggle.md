@@ -21,7 +21,7 @@
 meet-master preview --gestures
 ```
 
-Montre ✌️ et maintiens-le brièvement. L’aperçu passe sur une carte sombre indiquant l’absence. Relâche le signe, puis montre-le de nouveau pour revenir à l’image webcam.
+Au démarrage de `--gestures`, sors du champ cinq secondes pendant que Meet Master prépare un clip du fond. Montre ✌️ et maintiens-le brièvement : l’aperçu passe sur ce clip en boucle. Relâche le signe, puis montre-le de nouveau pour revenir à l’image webcam.
 
 ## Limites actuelles
 

@@ -11,7 +11,7 @@ Le prototype permet de prévisualiser la webcam, détecter des gestes, basculer 
 | Aperçu webcam Linux | Disponible | [Guide de l’aperçu](docs/features/webcam-preview.md) |
 | Reconnaissance des gestes dans l’aperçu | Prototype disponible | [Fonctionnement et limites](docs/features/gesture-detection.md) |
 | Basculer présent/absent avec ✌️ | Prototype Linux | [Fiche de la bascule](docs/features/presence-toggle.md) |
-| Vidéo de remplacement en boucle | Prototype Linux | [Fonctionnement et limites](docs/features/replacement-video.md) |
+| Vidéo d’absence enregistrée automatiquement | Prototype Linux | [Fonctionnement et limites](docs/features/replacement-video.md) |
 | Transitions de disparition et de retour | À concevoir | [Spécification](docs/features/transitions.md) |
 | Caméra virtuelle Linux | À concevoir | [Spécification](docs/features/virtual-camera-linux.md) |
 | Intégration Windows | À concevoir | [Spécification](docs/features/windows.md) |
@@ -69,7 +69,7 @@ python -m meet_master --help
 
 La résolution demandée dépend des modes pris en charge par la webcam et son pilote. En mode standard, l’aperçu ne sauvegarde pas les images et ne se connecte pas au réseau. Il ne fournit pas encore de caméra virtuelle aux logiciels de réunion.
 
-Avec `--gestures`, le programme détecte jusqu’à deux mains, affiche les prédictions et utilise ✌️ pour basculer entre présent et absent. `--away-video` lit un fichier vidéo local en boucle pendant l’absence ; sans ce paramètre, l’aperçu affiche la carte sombre provisoire. La sortie reste un aperçu local : Zoom, Meet et Teams ne reçoivent pas encore ce flux. Consultez la [fiche de la vidéo de remplacement](docs/features/replacement-video.md), la [fiche gestes](docs/features/gesture-detection.md) et le [catalogue des emojis](docs/features/gesture-catalog.md) pour les détails et limites.
+Avec `--gestures`, le programme détecte jusqu’à deux mains, affiche les prédictions et utilise ✌️ pour basculer entre présent et absent. Au lancement, il demande de sortir du champ, attend cinq secondes et enregistre trois secondes de fond dans un dossier temporaire ; ce clip tourne en boucle pendant l’absence et est supprimé à la fermeture. `--away-video` permet de choisir un autre clip. La sortie reste un aperçu local : Zoom, Meet et Teams ne reçoivent pas encore ce flux. Consultez la [fiche de la vidéo de remplacement](docs/features/replacement-video.md), la [fiche gestes](docs/features/gesture-detection.md) et le [catalogue des emojis](docs/features/gesture-catalog.md) pour les détails et limites.
 
 ## Structure du code
 
